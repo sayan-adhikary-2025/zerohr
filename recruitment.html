@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            secondary: '#8b5cf6',
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+            'pulse-slow': 'pulse 3s infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow">
+    <div class="px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <h1 class="text-2xl font-semibold">Recruitment Hub</h1>
+      </div>
+  </header>
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-72 bg-white/80 backdrop-blur-sm border-r border-indigo-100 shadow-lg">
+      <nav class="p-6 space-y-2">
+        <button
+          class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 bg-indigo-50 hover:text-indigo-600 shadow-lg transform scale-105"
+          data-tab="post">
+          <span>Post New Job</span>
+        </button>
+        <button
+          class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 hover:transform hover:scale-105"
+          data-tab="listings">
+          <span>Job Listings</span>
+        </button>
+        <button
+          class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 hover:transform hover:scale-105"
+          data-tab="applications">
+          <span>Applications</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <!-- Post a Job Tab -->
+      <div id="post" class="tab-content animate-fade-in">
+        <div class="max-w-4xl mx-auto">
+          <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+            <div class="flex items-center space-x-3 mb-8">
+              <h2 class="text-2xl font-semibold bg-clip-text">
+                Create Amazing Job Opportunity
+              </h2>
+            </div>
+
+            <form id="jobForm" class="space-y-6">
+              <div class="grid grid-cols-1 gap-6">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Job Title</label>
+                  <input type="text" id="jobTitle" required
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">📍 Location</label>
+                    <input type="text" id="location" required
+                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🏢 Department/Team</label>
+                    <input type="text" id="department" required
+                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">⏰ Work Type</label>
+                    <select id="workType" required
+                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                      <option value="">Select Work Type</option>
+                      <option>Full Time</option>
+                      <option>Part Time</option>
+                      <option>Contractual</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">🌐 Job Mode</label>
+                    <div class="flex space-x-2 mt-2" id="jobModeGroup">
+                      <input type="radio" name="mode" id="onsite" value="On-Site" class="hidden">
+                      <label for="onsite"
+                        class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-lg border-2 border-gray-200 cursor-pointer transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50">On-Site</label>
+                      <input type="radio" name="mode" id="remote" value="Remote" class="hidden">
+                      <label for="remote"
+                        class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-lg border-2 border-gray-200 cursor-pointer transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50">Remote</label>
+                      <input type="radio" name="mode" id="hybrid" value="Hybrid" class="hidden">
+                      <label for="hybrid"
+                        class="flex-1 px-3 py-2 text-center text-sm font-medium rounded-lg border-2 border-gray-200 cursor-pointer transition-all duration-200 hover:border-indigo-300 hover:bg-indigo-50">Hybrid</label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">💰 Salary Min</label>
+                    <input type="number" id="salaryMin"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">💎 Salary Max</label>
+                    <input type="number" id="salaryMax"
+                      class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">📝 Job Summary</label>
+                  <textarea id="jobSummary" required rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">👥 About the Team</label>
+                  <textarea id="teamInfo" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">👔 Reporting To</label>
+                  <input type="text" id="reportingTo"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50">
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">🎯 Key Responsibilities</label>
+                  <textarea id="responsibilities" required rows="4"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">⚡ Skills & Attributes for
+                    Success</label>
+                  <textarea id="skills" required rows="4"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">🎓 Preferred Education &
+                    Experience</label>
+                  <textarea id="education" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">🏢 About Us</label>
+                  <textarea id="aboutUs" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-white/50 resize-none"></textarea>
+                </div>
+              </div>
+
+              <button type="submit"
+                class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold py-4 px-8 rounded-xl hover:from-indigo-600 hover:to-purple-600 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                🚀 Create Amazing Job Post
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job Listings Tab -->
+      <div id="listings" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto animate-fade-in">
+          <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+            <div class="flex items-center justify-between mb-8">
+              <div class="flex items-center space-x-3">
+                <h2 class="text-2xl font-semibold bg-clip-text">
+                  Job Listings
+                </h2>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Job Title</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Department</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Posted On</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Applications</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Share</th>
+                  </tr>
+                </thead>
+                <tbody id="jobListBody" class="divide-y divide-gray-100">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Tab -->
+      <div id="applications" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto animate-fade-in">
+          <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+            <div class="flex items-center space-x-3 mb-8">
+              <h2 class="text-2xl font-semibold bg-clip-text">
+                Job Applications
+              </h2>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full border-separate border-spacing-y-6">
+                <thead>
+                  <tr class="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Job Title</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Department</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Applied On</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="applicationsTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Job Details Modal -->
+  <div class="modal fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+    id="jobModal">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+        <h3 class="text-xl font-bold text-gray-900">Job Details</h3>
+        <button onclick="document.getElementById('jobModal').classList.add('hidden')"
+          class="text-gray-400 hover:text-gray-600 transition-colors">
+          <span class="text-2xl">&times;</span>
+        </button>
+      </div>
+      <div id="jobDetails" class="p-6"></div>
+    </div>
+  </div>
+
+  <!-- Application Details Modal -->
+  <div class="modal fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+    id="applicationModal">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div
+        class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+        <h3 class="text-xl font-bold text-gray-900">Application Details</h3>
+        <button onclick="document.getElementById('applicationModal').classList.add('hidden')"
+          class="text-gray-400 hover:text-gray-600 transition-colors">
+          <span class="text-2xl">&times;</span>
+        </button>
+      </div>
+      <div id="applicationDetails" class="p-6"></div>
+    </div>
+  </div>
+
+  <script>
+    const userData = JSON.parse(localStorage.getItem("ZeroUserData") || "{}");
+    if (!userData?.user?.org_id || !userData?.user?.username) {
+      alert("Session expired. Please login again.");
+      window.location.href = "login.html";
+    }
+    const username = userData.user.username;
+    const org_id = userData.user.org_id;
+
+    const jobForm = document.getElementById("jobForm");
+    const jobListBody = document.getElementById("jobListBody");
+    const jobDetailsDiv = document.getElementById("jobDetails");
+
+    // Style radio buttons for job mode
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+      radio.addEventListener('change', function () {
+        document.querySelectorAll('label[for^="onsite"], label[for^="remote"], label[for^="hybrid"]').forEach(label => {
+          label.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
+          label.classList.add('border-gray-200', 'text-gray-700');
+        });
+        if (this.checked) {
+          const label = document.querySelector(`label[for="${this.id}"]`);
+          label.classList.remove('border-gray-200', 'text-gray-700');
+          label.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+        }
+      });
+    });
+
+    jobForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const mode = document.querySelector("input[name='mode']:checked");
+      if (!mode) {
+        alert("Please select a Job Mode! 🎯");
+        return;
+      }
+
+      const job = {
+        username,
+        title: jobForm.jobTitle.value,
+        location: jobForm.location.value,
+        department: jobForm.department.value,
+        work_type: jobForm.workType.value,
+        job_mode: mode.value,
+        salary_min: jobForm.salaryMin.value,
+        salary_max: jobForm.salaryMax.value,
+        job_summary: jobForm.jobSummary.value,
+        team_info: jobForm.teamInfo.value,
+        reporting_to: jobForm.reportingTo.value,
+        responsibilities: jobForm.responsibilities.value,
+        skills: jobForm.skills.value,
+        education: jobForm.education.value,
+        about_us: jobForm.aboutUs.value,
+      };
+
+      const res = await fetch("http://localhost:3000/api/job-postings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(job),
+      });
+
+      if (res.ok) {
+        alert("🎉 Job posted successfully!");
+        jobForm.reset();
+        document.querySelectorAll('label[for^="onsite"], label[for^="remote"], label[for^="hybrid"]').forEach(label => {
+          label.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
+          label.classList.add('border-gray-200', 'text-gray-700');
+        });
+        renderJobs();
+      } else {
+        alert("❌ Failed to create job. Please try again!");
+      }
+    });
+
+    async function renderJobs() {
+      jobListBody.innerHTML = "";
+      const res = await fetch(`http://localhost:3000/api/job-postings/user/${encodeURIComponent(username)}`);
+      const jobs = await res.json();
+      window.currentJobs = jobs;
+
+      jobs.forEach((job, index) => {
+        const row = document.createElement("tr");
+        row.className = "hover:bg-indigo-50/50 transition-colors duration-200";
+        row.innerHTML = `
+          <td class="px-6 py-4 font-medium text-gray-900">${job.title}</td>
+          <td class="px-6 py-4 text-gray-600">${job.department}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+              ${job.status}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-gray-600">${job.created_at || 'Active'}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+              ${job.applications || '0'} applicants
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            <button onclick="showJobDetails(${index})" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+              🔍 View
+            </button>
+          </td>
+          <td class="px-6 py-4">
+            <button onclick="copyJobLink('${job.id}')" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
+              🔗 Copy Link
+            </button>
+          </td>
+        `;
+        jobListBody.appendChild(row);
+      });
+    }
+
+    function copyJobLink(jobId) {
+      const link = `file:///C:/Users/mi%20pc/Downloads/Leave/job-view.html?id=${jobId}`;
+      navigator.clipboard.writeText(link).then(() => {
+        alert("🔗 Job link copied to clipboard!");
+      }).catch(err => {
+        alert("❌ Failed to copy link.");
+        console.error(err);
+      });
+    }
+
+    function showJobDetails(index) {
+      const job = window.currentJobs[index];
+      const html = `
+        <div class="space-y-6">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">${job.title}</h3>
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+              <span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">📍 ${job.location}</span>
+              <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">🏢 ${job.department}</span>
+              <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">⏰ ${job.work_type}</span>
+              <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">🌐 ${job.job_mode}</span>
+            </div>
+            ${job.salary_min && job.salary_max ? `<p class="text-lg font-semibold text-green-600">💰 ₹${job.salary_min} – ₹${job.salary_max}</p>` : ''}
+          </div>
+
+          <div class="grid gap-4">
+            <div class="bg-gray-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">📝 Job Summary</h4>
+              <p class="text-gray-700">${job.job_summary}</p>
+            </div>
+
+            ${job.about_team ? `
+            <div class="bg-blue-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">👥 About the Team</h4>
+              <p class="text-gray-700">${job.about_team}</p>
+            </div>
+            ` : ''}
+
+            ${job.reporting_to ? `
+            <div class="bg-purple-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">👔 Reporting To</h4>
+              <p class="text-gray-700">${job.reporting_to}</p>
+            </div>
+            ` : ''}
+
+            <div class="bg-green-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">🎯 Key Responsibilities</h4>
+              <p class="text-gray-700">${job.responsibilities}</p>
+            </div>
+
+            <div class="bg-yellow-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">⚡ Skills & Attributes</h4>
+              <p class="text-gray-700">${job.skills}</p>
+            </div>
+
+            ${job.education_experience ? `
+            <div class="bg-indigo-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">🎓 Education & Experience</h4>
+              <p class="text-gray-700">${job.education_experience}</p>
+            </div>
+            ` : ''}
+
+            ${job.about_us ? `
+            <div class="bg-pink-50 p-4 rounded-xl">
+              <h4 class="font-semibold text-gray-900 mb-2">🏢 About Us</h4>
+              <p class="text-gray-700">${job.about_us}</p>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      jobDetailsDiv.innerHTML = html;
+      document.getElementById("jobModal").classList.remove('hidden');
+      document.getElementById("jobModal").classList.add('flex');
+    }
+
+
+
+    // Tab switch
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        // Remove .active from all buttons
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+        // Hide all tab content
+        document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+
+        // Add .active to the clicked button
+        btn.classList.add("active");
+
+        // Show the corresponding tab content
+        document.getElementById(btn.dataset.tab).style.display = "block";
+
+        // Optional: Render content if needed
+        if (btn.dataset.tab === "listings") renderJobs?.();
+        if (btn.dataset.tab === "applications") renderApplications?.();
+      });
+    });
+
+
+    renderJobs();
+
+    async function renderApplications() {
+      const res = await fetch(`http://localhost:3000/api/applications/org/${org_id}`);
+      const applications = await res.json();
+      const tbody = document.getElementById("applicationsTableBody");
+      tbody.innerHTML = "";
+
+      applications.forEach(app => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+      <td>${app.full_name}</td>
+      <td>${app.title}</td>
+      <td>${app.department}</td>
+      <td>${new Date(app.created_at).toLocaleDateString()}</td>
+      <td>
+        <select onchange="updateApplicationStatus(${app.id}, this.value)">
+          <option ${app.status === "Applied" ? "selected" : ""}>Applied</option>
+          <option ${app.status === "Interviewing" ? "selected" : ""}>Interviewing</option>
+          <option ${app.status === "Accepted" ? "selected" : ""}>Accepted</option>
+          <option ${app.status === "Rejected" ? "selected" : ""}>Rejected</option>
+        </select>
+      </td>
+        <td>
+          <div class="action-buttons">
+            <button class="action-btn view-btn" onclick="viewApplication(${app.id})">🔍 View</button>
+            <a class="action-btn download-btn" href="http://localhost:3000${app.resume_link}" target="_blank">⬇️ Resume</a>
+          </div>
+        </td>
+
+    `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function updateApplicationStatus(id, status) {
+      await fetch(`http://localhost:3000/api/applications/${id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    }
+
+    async function viewApplication(id) {
+      const res = await fetch(`http://localhost:3000/api/applications/${id}`);
+      const app = await res.json();
+      const html = `
+    <h3>${app.full_name}</h3>
+    <p><strong>Email:</strong> ${app.email}</p>
+    <p><strong>Phone:</strong> ${app.phone}</p>
+    <p><strong>Location:</strong> ${app.current_location}</p>
+    <p><strong>Company:</strong> ${app.current_company}</p>
+    <p><strong>LinkedIn:</strong> <a href="${app.linkedin}" target="_blank">${app.linkedin}</a></p>
+    <p><strong>Portfolio:</strong> <a href="${app.portfolio}" target="_blank">${app.portfolio}</a></p>
+    <p><strong>Cover Letter:</strong><br>${app.cover_letter}</p>
+    <p><strong>Additional Info:</strong><br>${app.additional_info}</p>
+  `;
+      document.getElementById("applicationDetails").innerHTML = html;
+      document.getElementById("applicationModal").classList.remove('hidden');
+      document.getElementById("applicationModal").classList.add('flex');
+
+    }
+
+  </script>
+
+
+  </script>
+</body>
+
+</html>

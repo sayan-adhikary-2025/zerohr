@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Job Details – ZeroHR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script type="module">
+    import { createIcons, icons } from "https://unpkg.com/lucide@latest";
+    createIcons({ icons });
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+  <div class="max-w-3xl mx-auto p-6 mt-10 bg-white rounded-2xl shadow-md">
+    <h1 id="jobTitle" class="text-2xl font-semibold mb-1">Loading...</h1>
+    <div id="jobMeta" class="text-sm text-slate-500 mb-6"></div>
+
+    <div id="jobSummary" class="mb-6"></div>
+    <div id="responsibilities" class="mb-6"></div>
+    <div id="skills" class="mb-6"></div>
+    <div id="education" class="mb-6"></div>
+    <div id="aboutTeam" class="mb-6"></div>
+    <div id="aboutUs" class="mb-6"></div>
+
+    <a href="#" id="applyBtn" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg text-sm font-medium transition">
+      Apply Now →
+    </a>
+  </div>
+
+  <script>
+    async function fetchJobDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const jobId = urlParams.get("id");
+      if (!jobId) {
+        document.body.innerHTML = "<p class='text-center mt-10 text-red-600'>Invalid job link.</p>";
+        return;
+      }
+
+      const res = await fetch(`http://localhost:3000/api/job-postings/${jobId}`);
+      if (!res.ok) {
+        document.body.innerHTML = "<p class='text-center mt-10 text-red-600'>Job not found.</p>";
+        return;
+      }
+
+      const job = await res.json();
+
+      const formatLakh = (amount) => {
+        if (!amount) return '';
+        return `INR ${(amount / 100000).toFixed(1)} lakh`;
+      };
+
+      const section = (title, content) => {
+        if (!content) return '';
+        return `<h3 class="text-blue-600 font-semibold mb-1">${title}</h3><p class="text-sm text-slate-700 leading-relaxed mb-4">${content.replace(/\n/g, "<br>")}</p>`;
+      };
+
+      document.getElementById("jobTitle").textContent = job.title;
+      document.getElementById("jobMeta").textContent =
+        `${job.location} • ${job.work_type} (${job.job_mode}) • ${formatLakh(job.salary_min)} - ${formatLakh(job.salary_max)}`;
+
+      document.getElementById("jobSummary").innerHTML = section("Job Summary", job.job_summary);
+      document.getElementById("responsibilities").innerHTML = section("Key Responsibilities", job.responsibilities);
+      document.getElementById("skills").innerHTML = section("Skills & Attributes for Success", job.skills);
+      document.getElementById("education").innerHTML = section("Preferred Education & Experience", job.education_experience);
+      document.getElementById("aboutTeam").innerHTML = section("About the Team", job.about_team);
+      document.getElementById("aboutUs").innerHTML = section("About Us", job.about_us);
+
+      document.getElementById("applyBtn").href = `apply.html?job_id=${job.id}`;
+    }
+
+    fetchJobDetails();
+  </script>
+</body>
+</html>

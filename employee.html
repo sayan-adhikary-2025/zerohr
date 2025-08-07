@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeroHR - Employee</title>
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    header {
+      background: #1e293b;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+    }
+
+    header .left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    header .left img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    nav {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.5rem 2rem;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #1e293b;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+    }
+
+    nav button.active {
+      border-bottom: 3px solid #1e293b;
+      color: #0f172a;
+    }
+
+    #content>section {
+      display: none;
+      padding: 2rem;
+    }
+
+    #content>section.active {
+      display: block;
+    }
+
+    .logout {
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #fca5a5;
+    }
+
+    .leave-summary {
+      display: flex;
+      gap: 1.5rem;
+      margin: 1rem 2rem 1rem 0;
+    }
+
+    .popup label,
+    .popup input,
+    .popup textarea,
+    .popup select {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0 1rem;
+      font-size: 1rem;
+    }
+
+    .popup textarea {
+      resize: vertical;
+    }
+
+    .popup button {
+      background: #1366d6;
+      color: white;
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .popup button:hover {
+      background: #0f57b2;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .status-Pending {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+
+    .status-Accepted {
+      color: #16a34a;
+      font-weight: 600;
+    }
+
+    .status-Rejected {
+      color: #dc2626;
+      font-weight: 600;
+    }
+
+
+    .summary-card {
+      background: #fff;
+      padding: 2rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .summary-card h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      color: #64748b;
+    }
+
+    .summary-card p {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .apply-actions {
+      margin-bottom: 1.5rem;
+    }
+
+    .apply-actions button {
+      background: #1366d6;
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      margin-right: 1rem;
+      cursor: pointer;
+    }
+
+    .apply-actions button:hover {
+      background: #0f57b2;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .popup {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .celebration {
+      background: #fff;
+      text-align: center;
+      padding: 2rem;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      animation: pop 0.6s ease;
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .team-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .team-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .team-card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+    }
+
+    .team-card h4 {
+      margin: 0.2rem 0;
+      font-size: 1.1rem;
+    }
+
+    .team-card p {
+      margin: 0.2rem 0;
+      font-size: 0.95rem;
+      color: #475569;
+    }
+
+    .team-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+
+    .team-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    #profileContainer {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-header img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #1366d6;
+    }
+
+    .profile-header h3 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #0f172a;
+    }
+
+    .profile-header p {
+      margin: 0.3rem 0 0;
+      font-size: 1rem;
+      color: #64748b;
+    }
+
+    .profile-section {
+      margin-bottom: 2rem;
+    }
+
+    .profile-section h4 {
+      margin-bottom: 1rem;
+      color: #475569;
+      font-size: 1rem;
+      font-weight: 600;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.2rem;
+    }
+
+    .detail-grid .detail-item h5 {
+      font-size: 0.85rem;
+      margin: 0;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .detail-grid .detail-item p {
+      margin: 0.2rem 0 0;
+      font-size: 1rem;
+      color: #1e293b;
+      font-weight: 500;
+    }
+
+
+    .profile-container {
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      max-width: 800px;
+      margin-top: 2rem;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .profile-header img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #e2e8f0;
+    }
+
+    .profile-header h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #0f172a;
+    }
+
+    .profile-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+
+
+    .profile-details .detail {
+      background: #f1f5f9;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+    }
+
+    .profile-details .detail h4 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .profile-details .detail p {
+      margin: 0.25rem 0 0;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .profile-card {
+      display: flex;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .profile-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 1rem;
+      color: #334155;
+      min-width: 200px;
+    }
+
+    .profile-info span {
+      font-weight: 500;
+    }
+
+    .profile-info h2 {
+      margin: 0;
+    }
+
+    .leave-balances {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .leave-chip {
+      background: #f1f5f9;
+      padding: 0.75rem 1.25rem;
+      border-radius: 2rem;
+      font-weight: 600;
+    }
+
+    .leave-chip.casual {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .leave-chip.sick {
+      background: #fef9c3;
+      color: #92400e;
+    }
+
+    .leave-chip.earned {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .panel {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .cards-row .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1rem;
+      min-width: 180px;
+      flex: 1;
+      max-width: 220px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .cards-row .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .document-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      padding: 1rem 0;
+    }
+
+    .document-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .document-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .document-card i {
+      font-size: 2rem;
+      color: #2563eb;
+      margin-bottom: 0.75rem;
+    }
+
+    .document-card p {
+      margin: 0;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      margin: 2rem 0 1rem;
+      color: #1e293b;
+      border-left: 6px solid #2563eb;
+      padding-left: 1rem;
+    }
+
+    .doc-category {
+      margin-bottom: 3rem;
+    }
+
+    .doc-category h3 {
+      font-size: 1.2rem;
+      color: #334155;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .document-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1.2rem 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid #e2e8f0;
+    }
+
+    .document-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+      background: white;
+    }
+
+    .document-card i {
+      font-size: 1.8rem;
+      color: #2563eb;
+      margin-bottom: 0.75rem;
+    }
+
+    .document-card p {
+      margin: 0;
+      font-weight: 600;
+      color: #1e293b;
+      font-size: 1rem;
+    }
+
+    .document-tag {
+      font-size: 0.8rem;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      display: inline-block;
+      margin-top: 0.5rem;
+      width: fit-content;
+    }
+
+
+    #homeName {
+      font-size: 25px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="left">
+      <img src="logo.png" alt="Logo">
+      <h1 style="font-size: 1.2rem;">ZeroHR for Employees</h1>
+    </div>
+    <div>
+      <span id="employeeName">Welcome</span> | <span class="logout" onclick="logout()">Logout</span>
+    </div>
+  </header>
+
+  <nav>
+    <button onclick="switchTab('home')" class="active">Home</button>
+    <button onclick="switchTab('profile')">My Profile</button>
+    <button onclick="switchTab('leaves')">Leaves/WFH</button>
+    <button onclick="switchTab('documents')">Documents</button>
+    <button onclick="switchTab('team')">My Team</button>
+  </nav>
+
+  <div id="content">
+    <section id="home" class="active">
+      <div class="dashboard-container">
+        <!-- Profile Summary -->
+        <div class="profile-card">
+          <img src="https://cdn-icons-png.flaticon.com/512/4140/4140047.png" alt="Profile" class="profile-photo">
+          <div class="profile-info">
+            <span id="homeName"></span>
+            <span id="homePosition"></span>
+            <span id="homeManager"></span>
+            <span id="homeJoin"></span>
+            <span id="homeEmail"></span>
+
+          </div>
+        </div>
+
+        <!-- Leave Balances -->
+        <div class="leave-balances">
+          <div class="leave-chip casual">CL: <span id="clChip">--</span></div>
+          <div class="leave-chip sick">SL: <span id="slChip">--</span></div>
+          <div class="leave-chip earned">EL: <span id="elChip">--</span></div>
+        </div>
+
+        <!-- Leave Today/Tomorrow -->
+        <div class="panel">
+          <h3>🚪 Who's on Leave Today</h3>
+          <div id="leaveTodayTomorrow" class="cards-row"></div>
+        </div>
+
+        <!-- Birthdays -->
+        <div class="panel">
+          <h3>🎂 Birthdays Today</h3>
+          <div id="birthdaysContainer" class="cards-row"></div>
+        </div>
+
+        <!-- Upcoming Holidays -->
+        <div class="panel">
+          <h3>📅 Upcoming Holidays</h3>
+          <div id="holidayList"></div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="panel">
+          <h3>📣 HR Notifications</h3>
+          <div id="notificationsArea"></div>
+        </div>
+
+        <!-- Internal Job Postings -->
+        <div class="panel">
+          <h3>🚀 Internal Job Openings</h3>
+          <div id="jobPostings" class="cards-row"></div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <section id="profile">
+      <div class="profile-container" id="profileContainer">
+        <p>Loading profile...</p>
+      </div>
+    </section>
+
+    <section id="leaves">
+      <h3>Remaining Leaves in current FY</h3>
+      <!-- Summary Cards -->
+      <div class="leave-summary">
+        <div class="summary-card">
+          <h3>Casual Leaves</h3>
+          <p id="remainingCL">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Sick Leaves</h3>
+          <p id="remainingSL">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Earned Leaves</h3>
+          <p id="remainingEL">--</p>
+        </div>
+      </div>
+
+
+      <!-- Apply Buttons -->
+      <div class="apply-actions">
+        <button onclick="openPopup('leave')">+ Apply Leave</button>
+        <button onclick="openPopup('wfh')">+ Apply WFH</button>
+      </div>
+
+      <!-- Leave History -->
+      <h3>Leave History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Duration</th>
+            <th>Reason</th>
+            <th>Type</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="leaveTableBody"></tbody>
+      </table>
+
+      <!-- WFH History -->
+      <h3 style="margin-top: 3rem;">WFH History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Reason</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="wfhTableBody"></tbody>
+      </table>
+
+      <!-- Popup -->
+      <div class="overlay" id="popupOverlay">
+        <div class="popup">
+          <h3 id="popupTitle">Apply for Leave</h3>
+          <form id="applyForm">
+            <div id="leaveFields">
+              <label>Leave Type</label>
+              <select id="leave_type" required>
+                <option value="">Select</option>
+                <option>Sick Leave</option>
+                <option>Casual Leave</option>
+                <option>Earned Leave</option>
+              </select>
+
+              <label>Duration</label>
+              <select id="duration" required>
+                <option value="">Select</option>
+                <option>Full Day</option>
+                <option>Half Day</option>
+              </select>
+            </div>
+
+            <label>From Date</label>
+            <input type="date" id="fromDate" required />
+
+            <label>To Date</label>
+            <input type="date" id="toDate" required />
+
+            <label>Reason</label>
+            <textarea id="reason" required></textarea>
+
+            <button type="submit">Submit</button>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- Success Celebration -->
+      <div class="overlay" id="celebrationOverlay">
+        <div class="celebration">
+          🎉 <h2>Congratulations!</h2>
+          <p>Your request is with your manager.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="documents">
+
+      <div class="doc-category">
+        <h3>📄 Employment Documents</h3>
+        <div class="doc-grid" id="employmentDocs"></div>
+      </div>
+
+      <div class="doc-category">
+        <h3>💰 Salary & Tax Documents</h3>
+        <div class="doc-grid" id="salaryDocs"></div>
+      </div>
+
+      <div class="doc-category">
+        <h3>📘 Company Policies</h3>
+        <div class="doc-grid" id="policyDocs"></div>
+      </div>
+    </section>
+
+
+
+    <section id="team">
+      <h2>My Team</h2>
+      <div id="teamCards" class="team-cards"></div>
+    </section>
+
+
+    <script>
+      const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+      if (!userData?.user || userData.user.user_type !== 2) {
+        alert("Unauthorized access or not logged in. Redirecting to login page.");
+        window.location.href = "login.html";
+      } else {
+        document.getElementById("employeeName").textContent = userData.user.fullname || userData.user.username || "Employee";
+        localStorage.setItem("username", userData.user.username);
+        localStorage.setItem("org_id", userData.user.org_id);
+
+        // 🚀 Fetch employee details
+        loadHomeTab();
+      }
+
+      function switchTab(tabId) {
+        document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+        document.querySelectorAll("#content > section").forEach(sec => sec.classList.remove("active"));
+        document.querySelector(`nav button[onclick*='${tabId}']`).classList.add("active");
+        document.getElementById(tabId).classList.add("active");
+
+        if (tabId === "leaves") loadLeaveData();
+        else if (tabId === "team") loadTeamData();
+        else if (tabId === "profile") loadMyProfile();
+        else if (tabId === "home") loadHomeTab();
+        else if (tabId === "documents") loadDocumentsTab();
+
+
+      }
+
+      function openPopup(type) {
+        document.getElementById("popupOverlay").style.display = "flex";
+        document.getElementById("popupTitle").textContent = `Apply for ${type.toUpperCase()}`;
+        document.getElementById("applyForm").dataset.type = type;
+
+        const leaveFields = document.getElementById("leaveFields");
+        const leaveTypeField = document.getElementById("leave_type");
+        const durationField = document.getElementById("duration");
+
+
+        if (type === "wfh") {
+          leaveFields.style.display = "none";
+          leaveTypeField.removeAttribute("required");
+          durationField.removeAttribute("required");
+        } else {
+          leaveFields.style.display = "block";
+          leaveTypeField.setAttribute("required", "required");
+          durationField.setAttribute("required", "required");
+        }
+      }
+
+      document.getElementById("applyForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const isWFH = document.getElementById("applyForm").dataset.type === "wfh";
+        const url = "http://localhost:3000/api/employee/apply";
+
+        const payload = {
+          username: userData.user.username,
+          from_date: document.getElementById("fromDate").value,
+          to_date: document.getElementById("toDate").value,
+          reason: document.getElementById("reason").value,
+        };
+
+        if (isWFH) {
+          payload.leave_wfh = "WFH"
+          payload.leave_type = ""
+          payload.duration = ""
+        } else {
+          payload.leave_type = document.getElementById("leave_type").value;
+          payload.duration = document.getElementById("duration").value;
+          payload.leave_wfh = "Leave"
+        }
+
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          document.getElementById("popupOverlay").style.display = "none";
+          showCelebration();
+          document.getElementById("applyForm").reset();
+          loadLeaveData(); // Refresh tables
+        } else {
+          alert("Failed to apply. Try again.");
+        }
+      });
+
+
+      function showCelebration() {
+        const overlay = document.getElementById("celebrationOverlay");
+        overlay.style.display = "flex";
+        setTimeout(() => { overlay.style.display = "none"; }, 4000);
+      }
+
+      // Optional: Auto-close popup on background click
+      document.getElementById("popupOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "popupOverlay") e.target.style.display = "none";
+      });
+
+      const myData = JSON.parse(localStorage.getItem("my_data"));
+      const userId = myData?.user_id;
+
+      async function loadLeaveData() {
+        const myData = JSON.parse(localStorage.getItem("ZeroUserData"));
+        const userId = myData?.user.user_id;
+        if (!userId) {
+          console.warn("User ID not found in localStorage. Try again later.");
+          return;
+        }
+
+        const res = await fetch(`http://localhost:3000/api/employee/leave-wfh?user_id=${userId}`);
+        const data = await res.json();
+
+        document.getElementById("remainingCL").textContent = data.remaining_cl;
+        document.getElementById("remainingSL").textContent = data.remaining_sl;
+        document.getElementById("remainingEL").textContent = data.remaining_el;
+
+
+        const leaveTable = document.getElementById("leaveTableBody");
+        const wfhTable = document.getElementById("wfhTableBody");
+        leaveTable.innerHTML = "";
+        wfhTable.innerHTML = "";
+
+        data.history.forEach(item => {
+          let row;
+
+          if (item.type === "Casual Leave" || item.type === "Sick Leave" || item.type === "Earned Leave") {
+            // 👇 Include `type` column for leaves
+            row = `<tr>
+      <td>${item.from_date}</td>
+      <td>${item.to_date}</td>
+      <td>${item.duration}</td>
+      <td>${item.reason}</td>
+      <td>${item.type}</td>
+      <td class="status-${item.status}">${item.status}</td>
+    </tr>`;
+            leaveTable.innerHTML += row;
+          } else {
+            // 👇 Exclude `type` column for WFH
+            row = `<tr>
+      <td>${item.from_date}</td>
+      <td>${item.to_date}</td>
+      <td>${item.reason}</td>
+      <td class="status-${item.status}">${item.status}</td>
+    </tr>`;
+            wfhTable.innerHTML += row;
+          }
+        });
+
+      }
+
+
+      async function loadTeamData() {
+        const teamCards = document.getElementById("teamCards");
+        teamCards.innerHTML = "<p>Loading team members...</p>";
+
+        try {
+          const res = await fetch("http://localhost:3000/api/manager/employees", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: userData.user.username })
+          });
+
+          const data = await res.json();
+          teamCards.innerHTML = "";
+
+          if (!data.employees || data.employees.length === 0) {
+            teamCards.innerHTML = "<p>No team members found.</p>";
+            return;
+          }
+
+          data.employees.forEach(emp => {
+            const profileImg = emp.gender?.toLowerCase() === "female"
+              ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+              : "https://cdn-icons-png.flaticon.com/512/4140/4140061.png";
+
+            const card = document.createElement("div");
+            card.className = "team-card";
+            card.innerHTML = `
+        <img src="${profileImg}" alt="Profile">
+        <h4>${emp.fullname}</h4>
+        <p>${emp.position || "N/A"}</p>
+        <p>DOB: ${emp.dob || "-"}</p>
+        <p>Joining: ${emp.joining_date || "-"}</p>
+      `;
+            card.addEventListener("click", () => {
+              localStorage.setItem("ZeroEmployeeData", JSON.stringify(emp));
+              window.location.href = "employee_detail.html";
+            });
+            teamCards.appendChild(card);
+            ;
+          });
+
+        } catch (err) {
+          console.error("Failed to load team:", err);
+          teamCards.innerHTML = "<p>Something went wrong. Try again later.</p>";
+        }
+      }
+
+      // Fetch employee details using the username and store in localStorage
+      async function fetchEmployeeDetails() {
+        try {
+          const res = await fetch("http://localhost:3000/api/employee/details", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: userData.user.username })
+          });
+
+          if (!res.ok) {
+            console.warn("Failed to fetch employee details");
+            return;
+          }
+
+          const empData = await res.json();
+          localStorage.setItem("my_data", JSON.stringify(empData));
+        } catch (err) {
+          console.error("Error fetching employee data:", err);
+        }
+      }
+
+      async function loadMyProfile() {
+        const profileContainer = document.getElementById("profileContainer");
+        profileContainer.innerHTML = "<p>Loading profile...</p>";
+
+        try {
+          const res = await fetch("http://localhost:3000/api/employee/details", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: userData.user.username })
+          });
+
+          if (!res.ok) {
+            profileContainer.innerHTML = "<p>Failed to load profile.</p>";
+            return;
+          }
+
+          const data = await res.json();
+
+          const profileImg = data.gender?.toLowerCase() === "female"
+            ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+            : "https://cdn-icons-png.flaticon.com/512/4140/4140061.png";
+
+          profileContainer.innerHTML = `
+      <div class="profile-header">
+        <img src="${profileImg}" alt="Profile Photo">
+        <div>
+          <h3>${data.fullname || "-"}</h3>
+          <p>${data.position || "Employee"}</p>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h4>Contact Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h5>Email</h5><p>${data.email || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Mobile</h5><p>${data.mobile || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Address</h5><p>${data.address || "-"}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h4>Employment Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h5>Employee Code</h5><p>${data.emp_code || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Department</h5><p>${data.department || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Joining Date</h5><p>${data.joining_date || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Reporting Manager</h5><p>${data.reporting_manager || "-"}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h4>Personal Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <h5>Gender</h5><p>${data.gender || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Date of Birth</h5><p>${data.dob || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Blood Group</h5><p>${data.blood_group || "-"}</p>
+          </div>
+          <div class="detail-item">
+            <h5>Marital Status</h5><p>${data.marital_status || "-"}</p>
+          </div>
+        </div>
+      </div>
+    `;
+        } catch (err) {
+          console.error("Error loading profile:", err);
+          profileContainer.innerHTML = "<p>Error fetching profile data.</p>";
+        }
+      }
+
+
+      async function loadHomeTab() {
+        const myData = JSON.parse(localStorage.getItem("ZeroUserData"));
+        const username = myData?.user.username;
+
+        if (!username) return;
+
+        const res = await fetch(`http://localhost:3000/api/employee/home-summary?username=${username}`);
+        const data = await res.json();
+
+        document.getElementById("homeName").textContent = data.fullname || "--";
+        document.getElementById("homePosition").textContent = data.position || "--";
+        document.getElementById("homeEmail").textContent = data.email || "--";
+
+        document.getElementById("clChip").textContent = data.remaining_cl || "0";
+        document.getElementById("slChip").textContent = data.remaining_sl || "0";
+        document.getElementById("elChip").textContent = data.remaining_el || "0";
+
+        // Who’s on Leave
+        const leaveHTML = [...(data.leave_today || []), ...(data.leave_tomorrow || [])]
+          .map((item, i) => `
+      <div class="card">
+        🧑 ${item.fullname}<br>
+        <small>${item.department} - ${i < data.leave_today.length ? "Today" : "Tomorrow"}</small>
+      </div>
+    `).join("");
+        document.getElementById("leaveTodayTomorrow").innerHTML = leaveHTML || "<p>No leave data.</p>";
+
+        // Birthdays
+        document.getElementById("birthdaysContainer").innerHTML = (data.birthdays || []).map(emp => `
+    <div class="card">
+      🎂 ${emp.fullname}<br>
+      <small>${emp.department}</small>
+    </div>
+  `).join("") || "<p>No birthdays today!</p>";
+
+        // Holidays
+        document.getElementById("holidayList").innerHTML = (data.holidays || []).map(h => `
+    <p>📅 ${h.date} - ${h.occasion}</p>
+  `).join("") || "<p>No upcoming holidays.</p>";
+
+        // HR Notifications
+        document.getElementById("notificationsArea").innerHTML = (data.notifications || []).map(n => `
+    <p><strong>${n.type === "urgent" ? "🚨 Urgent:" : "📢"} </strong>${n.message}</p>
+  `).join("") || "<p>No new notifications.</p>";
+
+        // Job Postings
+        document.getElementById("jobPostings").innerHTML = (data.jobs || []).map(job => `
+    <div class="card">
+      📌 ${job.title}<br>
+      <small>${job.department}</small>
+    </div>
+  `).join("") || "<p>No current openings.</p>";
+      }
+
+
+
+
+      function loadDocumentsTab() {
+        const username = localStorage.getItem("username");
+
+        const sections = {
+          employmentDocs: [
+            { label: "Offer Letter", filename: "offer_letter.pdf", tag: "Employment Document" },
+            { label: "Promotion Letters", filename: "promotion_letter.pdf", tag: "Employment Document" },
+            { label: "Appraisal Letters", filename: "appraisal_letter.pdf", tag: "Employment Document" }
+          ],
+          salaryDocs: [
+            { label: "Payslips", filename: "payslips.zip", tag: "Salary & Tax" },
+            { label: "Form 16 / TDS", filename: "form_16.pdf", tag: "Tax Certificate" },
+            { label: "Investment Declarations", filename: "investment_declaration.pdf", tag: "Declaration" },
+            { label: "Tax Proof Submissions", filename: "tax_proof.pdf", tag: "Proofs" }
+          ],
+          policyDocs: [
+            { label: "Employee Handbook", filename: "employee_handbook.pdf", tag: "Company Policy" },
+            { label: "HR Policies", filename: "hr_policies.pdf", tag: "Company Policy" },
+            { label: "Disciplinary Guidelines", filename: "disciplinary_guidelines.pdf", tag: "Policy" }
+          ]
+        };
+
+        Object.keys(sections).forEach(sectionId => {
+          const container = document.getElementById(sectionId);
+          container.innerHTML = "";
+
+          sections[sectionId].forEach(doc => {
+            const card = document.createElement("div");
+            card.className = "document-card";
+            card.innerHTML = `
+        <i class="fas fa-file-pdf"></i>
+        <p>${doc.label}</p>
+        <span class="document-tag">${doc.tag}</span>
+      `;
+            card.onclick = () => {
+              const fileUrl = `http://localhost:3000/api/employee/documents/${username}/${doc.filename}`;
+              window.open(fileUrl, "_blank");
+            };
+            container.appendChild(card);
+          });
+        });
+      }
+
+
+
+
+      function logout() {
+        localStorage.removeItem("ZeroUserData");
+        localStorage.removeItem("username");
+        localStorage.removeItem("org_id");
+        localStorage.removeItem("my_data");
+        window.location.href = "login.html";
+      }
+
+    </script>
+</body>
+
+</html>

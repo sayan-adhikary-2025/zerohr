@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login - ZeroHR</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #64748b;
+      --primary-light: #e2e8f0;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #6b7280;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+    }
+
+    .login-wrapper {
+      display: flex;
+      height: 100vh;
+    }
+
+    .login-left {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bg-video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+
+
+    .login-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--card);
+      padding: 2rem;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo img {
+      width: 120px;
+      height: 120px;
+      border-radius: 100%;
+      object-fit: cover;
+      box-shadow: 1px 1px 1px 1px rgba(0.1, 0.1, 0.1, 0.1);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius);
+      background: #f1f5f9;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      padding: 0.9rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #475569;
+    }
+
+    .footer-text {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+
+<div class="login-left">
+  <video autoplay muted loop playsinline class="bg-video">
+    <source src="login_lhs.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+
+
+    <div class="login-right">
+      <div class="login-box">
+        <div class="logo">
+          <img src="logo.png" alt="ZeroHR Logo" />
+        </div>
+
+        <h2>Welcome Back!</h2>
+
+        <form id="loginForm">
+          <label for="username">Username</label>
+          <input type="text" id="username" placeholder="Enter your username" required />
+
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required />
+
+          <button type="submit">Login</button>
+        </form>
+
+        <div class="footer-text">
+          © 2025 Pratiti Technologies Private Limited
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        alert("Username and password are required.");
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:3000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 1 && result.user) {
+          // ✅ Store clean structured user data
+          localStorage.setItem("ZeroUserData", JSON.stringify({
+            user: {
+              username: result.user.username,
+              org_id: result.user.org_id,
+              fullname: result.user.fullname,
+              user_type: result.user.user_type,
+              user_id: result.user.id
+            }
+          }));
+          if (result.user.user_type ===1){
+            window.location.href = "dashboard.html";
+          }if (result.user.user_type ===2) {
+            window.location.href = "employee.html";
+          }
+         
+        } else {
+          alert("Invalid login credentials");
+        }
+      } catch (err) {
+        alert("Login failed. Please try again.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

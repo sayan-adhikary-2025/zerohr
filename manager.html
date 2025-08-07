@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leave Management - Approver</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f6fc;
+      color: #333;
+    }
+    header {
+      background: #2196f3;
+      color: white;
+      padding: 1.5rem;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-top: 1rem;
+      gap: 1rem;
+    }
+    .tab-button {
+      background: #e3f2fd;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .tab-button.active {
+      background: #2196f3;
+      color: white;
+    }
+    .tab-button:hover {
+      transform: scale(1.05);
+    }
+    .tab-content {
+      display: none;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: auto;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    iframe {
+      width: 100%;
+      height: 1400px;
+      border: none;
+    }
+    select {
+      padding: 0.6rem;
+      border-radius: 8px;
+      width: 300px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+    th {
+      background: #e3f2fd;
+    }
+    .status-accepted { color: #4caf50; font-weight: bold; }
+    .status-rejected { color: #f44336; font-weight: bold; }
+    .status-pending { color: #ffa726; font-weight: bold; }
+    .action-btn {
+      background: #2196f3;
+      color: white;
+      padding: 0.4rem 1rem;
+      border: none;
+      border-radius: 6px;
+      margin-right: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: #1976d2;
+    }
+    .action-btn.reject {
+      background: #f44336;
+    }
+    .action-btn.reject:hover {
+      background: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+  <header>Leave Management - Approver</header>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab(event, 'myLeaves')">My Leaves</button>
+    <button class="tab-button" onclick="switchTab(event, 'reportees')">Manage Reportees</button>
+  </div>
+
+  <div id="myLeaves" class="tab-content active">
+    <iframe src="requester.html"></iframe>
+  </div>
+
+  <div id="reportees" class="tab-content">
+    <h3>Select a Reportee</h3>
+    <select id="reporteeSelect" onchange="loadReporteeData()">
+      <option value="">-- Select Reportee --</option>
+      <option value="emp1">John Doe</option>
+      <option value="emp2">Jane Smith</option>
+    </select>
+
+    <div id="reporteeInfo" style="display: none;">
+      <h4>Remaining Leaves for Reportee: <span id="remLeaves">12</span></h4>
+
+      <h4>Pending Leave Requests</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Duration</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pendingTable">
+          <tr>
+            <td>2025-07-04</td>
+            <td>2025-07-05</td>
+            <td>Full Day</td>
+            <td>Casual Leave</td>
+            <td>Bank work</td>
+            <td class="status-pending">Pending</td>
+            <td>
+              <button class="action-btn" onclick="approve(this)">Approve</button>
+              <button class="action-btn reject" onclick="reject(this)">Reject</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h4>Previous Leaves</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Duration</th>
+            <th>Type</th>
+            <th>Reason</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2025-06-10</td>
+            <td>2025-06-11</td>
+            <td>Full Day</td>
+            <td>Sick Leave</td>
+            <td>Fever</td>
+            <td class="status-accepted">Accepted</td>
+          </tr>
+          <tr>
+            <td>2025-06-20</td>
+            <td>2025-06-20</td>
+            <td>Half Day</td>
+            <td>Casual Leave</td>
+            <td>Personal</td>
+            <td class="status-rejected">Rejected</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    function switchTab(e, tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      e.target.classList.add('active');
+    }
+
+    function loadReporteeData() {
+      const selected = document.getElementById('reporteeSelect').value;
+      document.getElementById('reporteeInfo').style.display = selected ? 'block' : 'none';
+    }
+
+    function approve(btn) {
+      const row = btn.closest('tr');
+      const statusCell = row.querySelector('.status-pending');
+      statusCell.className = 'status-accepted';
+      statusCell.innerText = 'Accepted';
+      row.querySelector('td:last-child').innerHTML = '';
+    }
+
+    function reject(btn) {
+      const row = btn.closest('tr');
+      const statusCell = row.querySelector('.status-pending');
+      statusCell.className = 'status-rejected';
+      statusCell.innerText = 'Rejected';
+      row.querySelector('td:last-child').innerHTML = '';
+    }
+  </script>
+</body>
+</html>

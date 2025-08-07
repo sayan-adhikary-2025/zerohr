@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Apply for Job – ZeroHR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script type="module">
+    import { createIcons, icons } from "https://unpkg.com/lucide@latest";
+    createIcons({ icons });
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+  <div class="max-w-2xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow-md">
+    <div id="jobTitle" class="text-2xl font-semibold mb-1">Loading role...</div>
+    <div id="jobMeta" class="text-sm text-slate-500 mb-6"></div>
+
+    <form id="applyForm" class="space-y-5">
+      <div>
+        <label for="fullName" class="block font-medium">Full Name</label>
+        <input id="fullName" type="text" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="email" class="block font-medium">Email</label>
+        <input id="email" type="email" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="phone" class="block font-medium">Phone Number</label>
+        <input id="phone" type="text" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="currentLocation" class="block font-medium">Current Location</label>
+        <input id="currentLocation" type="text" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="currentCompany" class="block font-medium">Current Company</label>
+        <input id="currentCompany" type="text" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="linkedin" class="block font-medium">LinkedIn Profile (optional)</label>
+        <input id="linkedin" type="url" class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="portfolio" class="block font-medium">Portfolio/Website (optional)</label>
+        <input id="portfolio" type="url" class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50" />
+      </div>
+
+      <div>
+        <label for="coverLetter" class="block font-medium">Why do you want to join us?</label>
+        <textarea id="coverLetter" rows="5" required class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50 resize-y"></textarea>
+      </div>
+
+      <div>
+        <label for="additionalInfo" class="block font-medium">Additional Information (optional)</label>
+        <textarea id="additionalInfo" rows="5" class="w-full mt-1 px-4 py-2 border border-slate-300 rounded-md bg-slate-50 resize-y"></textarea>
+      </div>
+
+      <div>
+        <label for="resumeFile" class="block font-medium">Upload Resume (PDF/DOC)</label>
+        <input id="resumeFile" type="file" accept=".pdf,.doc,.docx" required class="mt-2" />
+      </div>
+
+      <button type="submit" class="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
+        Submit application →
+      </button>
+    </form>
+  </div>
+
+  <!-- 🎉 Success Popup -->
+  <div id="overlay" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-40 z-40"></div>
+  <div id="popup" class="hidden fixed top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg text-center z-50">
+    <div class="text-4xl mb-2">🎉</div>
+    <h3 class="text-xl font-semibold">Application submitted!</h3>
+    <p class="text-sm text-slate-600 mt-2">Thank you for applying. Our HR team will get back to you if you are shortlisted.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const job_id = params.get("job_id");
+
+    if (!job_id) {
+      alert("Missing job ID.");
+      window.location.href = "jobs.html";
+    }
+
+    function formatLakh(num) {
+      return '₹' + num.toString().replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    }
+
+    async function loadJobDetails() {
+      try {
+        const res = await fetch(`http://localhost:3000/api/job-postings/${job_id}`);
+        if (!res.ok) throw new Error();
+        const job = await res.json();
+        document.getElementById("jobTitle").textContent = job.title;
+        document.getElementById("jobMeta").textContent =
+          `${job.location} • ${job.work_type} (${job.job_mode}) • ${formatLakh(job.salary_min)} - ${formatLakh(job.salary_max)}`;
+      } catch (e) {
+        document.getElementById("jobTitle").textContent = "Role details unavailable";
+      }
+    }
+    loadJobDetails();
+
+    function showSuccessPopup() {
+      document.getElementById("overlay").classList.remove("hidden");
+      document.getElementById("popup").classList.remove("hidden");
+      setTimeout(() => {
+        document.getElementById("popup").classList.add("hidden");
+        document.getElementById("overlay").classList.add("hidden");
+      }, 5000);
+    }
+
+    document.getElementById("applyForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fileInput = document.getElementById("resumeFile");
+      const file = fileInput.files[0];
+      if (!file) return alert("Please upload your resume.");
+
+      const formData = new FormData();
+      formData.append("resume", file);
+      formData.append("job_id", job_id);
+      formData.append("full_name", document.getElementById("fullName").value);
+      formData.append("email", document.getElementById("email").value);
+      formData.append("phone", document.getElementById("phone").value);
+      formData.append("current_location", document.getElementById("currentLocation").value);
+      formData.append("current_company", document.getElementById("currentCompany").value);
+      formData.append("linkedin", document.getElementById("linkedin").value);
+      formData.append("portfolio", document.getElementById("portfolio").value);
+      formData.append("cover_letter", document.getElementById("coverLetter").value);
+      formData.append("additional_info", document.getElementById("additionalInfo").value);
+
+      const res = await fetch("http://localhost:3000/api/apply", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        showSuccessPopup();
+        document.getElementById("applyForm").reset();
+      } else {
+        alert("❌ Failed to apply. Try again.");
+      }
+    });
+  </script>
+</body>
+</html>

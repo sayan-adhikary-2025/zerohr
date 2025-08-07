@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Employee Onboarding – ZeroHR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans">
+    <header
+      class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow"
+    >
+      <h1 class="text-xl font-semibold">Employee Onboarding</h1>
+      <button
+  onclick="openAddModal()"
+  class="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+>
+  <i data-lucide="user-plus" class="w-5 h-5"></i>
+  <span class="text-sm font-medium">Add Employee</span>
+</button>
+
+    </header>
+
+    <main class="p-6 max-w-6xl mx-auto">
+      <div class="mb-4">
+        <label for="departmentFilter" class="block mb-1 font-medium"
+          >Filter by Department</label
+        >
+        <select
+          id="departmentFilter"
+          class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/3"
+        >
+          <option value="">All Departments</option>
+          <option>Engineering</option>
+          <option>Marketing</option>
+          <option>HR</option>
+          <option>Sales</option>
+        </select>
+      </div>
+
+      <div class="overflow-x-auto bg-white shadow rounded-lg">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-3">Employee ID</th>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Department</th>
+              <th class="px-4 py-3">Designation</th>
+              <th class="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody">
+            <!-- Dynamically filled rows -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Add Employee Modal -->
+    <div
+      id="addEmployeeModal"
+      class="fixed inset-0 hidden flex bg-black bg-opacity-50 justify-center items-center z-50"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-lg font-semibold mb-4">Add New Employee</h2>
+        <form id="addEmployeeForm">
+          <input
+            type="text"
+            placeholder="Full Name"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Employee ID"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Department"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Designation"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
+          <div class="flex justify-end gap-2">
+            <button
+              type="button"
+              onclick="closeAddModal()"
+              class="px-4 py-2 border rounded"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let allEmployees = [];
+
+      // Fetch employee data from backend API and store in localStorage
+      async function fetchEmployeesFromAPI() {
+        try {
+          const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+          const org_id = userData?.user?.org_id;
+
+          const res = await fetch(
+            `http://localhost:3000/api/fetch_employees?org_id=${org_id}`
+          );
+          const data = await res.json();
+
+          if (data && data.data) {
+            allEmployees = data.data;
+            localStorage.setItem("employeeData", JSON.stringify(allEmployees));
+            renderEmployees();
+          }
+        } catch (err) {
+          console.error("Failed to fetch employees:", err);
+        }
+      }
+
+      // Render employee rows in the table
+      function renderEmployees() {
+  const tbody = document.getElementById("employeeTableBody");
+  tbody.innerHTML = "";
+
+  allEmployees.forEach((emp) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="border px-4 py-2">${emp.emp_code || "N/A"}</td>
+      <td class="border px-4 py-2">${emp.fullname || "N/A"}</td>
+      <td class="border px-4 py-2">${emp.department || "N/A"}</td>
+      <td class="border px-4 py-2">${emp.position || "N/A"}</td>
+      <td class="border px-4 py-2">
+  <button
+  onclick='editEmployee(${JSON.stringify(emp)})'
+  class="flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+>
+  <i data-lucide="pencil" class="w-4 h-4"></i>
+  <span>Edit</span>
+</button>
+</td>
+    `;
+    tbody.appendChild(tr);
+    lucide.createIcons();
+  });
+}
+
+
+      // Handle Add Employee form submission
+      document
+        .getElementById("addEmployeeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const [name, empCode, dept, role] = Array.from(e.target.elements).map(
+            (input) => input.value
+          );
+          const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+          const org_id = userData?.user?.org_id;
+
+          if (!org_id) return alert("Org ID missing from localStorage");
+
+          const newEmployee = {
+            org_id,
+            fullname: name,
+            emp_code: empCode,
+            position: role,
+            department: dept,
+            username: empCode + "@zerohr.in",
+            password: "password123", // You can make this dynamic later
+            user_type: 2,
+          };
+
+          try {
+            const res = await fetch("http://localhost:3000/api/add_employee", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(newEmployee),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+              await fetchEmployeesFromAPI(); // Refresh list
+              closeAddModal();
+            } else {
+              alert(data.error || "Error adding employee");
+            }
+          } catch (err) {
+            console.error("Add Employee Error:", err);
+            alert("Failed to add employee.");
+          }
+        });
+
+      // Modal open/close logic (if you're using a modal)
+      function closeAddModal() {
+        document.getElementById("addEmployeeModal").classList.add("hidden");
+        document.getElementById("addEmployeeForm").reset();
+      }
+
+      function openAddModal() {
+        document.getElementById("addEmployeeModal").classList.remove("hidden");
+      }
+
+      // Initialize on load
+      window.addEventListener("DOMContentLoaded", fetchEmployeesFromAPI);
+
+
+function editEmployee(employee) {
+  localStorage.setItem("SelectedEmployee", JSON.stringify(employee));
+  window.location.href = "view_employee.html";
+}
+
+
+
+      lucide.createIcons();
+
+    </script>
+  </body>
+</html>

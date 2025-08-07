@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workforce Analytics – ZeroHR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans">
+    <header class="bg-slate-800 text-white px-6 py-4 shadow flex justify-between items-center">
+      <h1 class="text-xl font-semibold">Workforce Analytics</h1>
+      <button onclick="window.location.href='index.html'" class="text-sm bg-blue-600 px-4 py-2 rounded hover:bg-blue-700">
+        ← Back to Dashboard
+      </button>
+    </header>
+
+    <main class="p-6 max-w-7xl mx-auto">
+      <h2 class="text-2xl font-bold mb-6">Rich Visual Analytics of Your Workforce</h2>
+
+      <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        <!-- Gender Ratio -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Gender Ratio</h3>
+          <canvas id="genderChart"></canvas>
+        </div>
+
+        <!-- Worker Types -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Worker Types</h3>
+          <canvas id="workerTypeChart"></canvas>
+        </div>
+
+        <!-- Exit Reasons -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Exit Reasons</h3>
+          <canvas id="exitReasonChart"></canvas>
+        </div>
+
+        <!-- Age Distribution -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Age Distribution</h3>
+          <canvas id="ageChart"></canvas>
+        </div>
+
+        <!-- Experience in Org -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Experience in Organization (Years)</h3>
+          <canvas id="experienceChart"></canvas>
+        </div>
+
+        <!-- Leaves Taken -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Avg. Leaves Taken per Month</h3>
+          <canvas id="leaveChart"></canvas>
+        </div>
+
+        <!-- Department Headcount -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Headcount per Department</h3>
+          <canvas id="departmentChart"></canvas>
+        </div>
+
+        <!-- Joining Trends -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Monthly Joining Trends</h3>
+          <canvas id="joiningTrendChart"></canvas>
+        </div>
+
+        <!-- Attrition Trends -->
+        <div class="bg-white shadow rounded-lg p-4">
+          <h3 class="font-semibold mb-2">Monthly Attrition Trends</h3>
+          <canvas id="attritionChart"></canvas>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const genderChart = new Chart(document.getElementById('genderChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Male', 'Female', 'Other'],
+          datasets: [{
+            data: [55, 40, 5],
+            backgroundColor: ['#3B82F6', '#F472B6', '#FACC15']
+          }]
+        }
+      });
+
+      const workerTypeChart = new Chart(document.getElementById('workerTypeChart'), {
+        type: 'pie',
+        data: {
+          labels: ['Permanent', 'Contract', 'Intern'],
+          datasets: [{
+            data: [60, 30, 10],
+            backgroundColor: ['#10B981', '#F59E0B', '#6366F1']
+          }]
+        }
+      });
+
+      const exitReasonChart = new Chart(document.getElementById('exitReasonChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Resignation', 'Termination', 'Retirement', 'Absconded'],
+          datasets: [{
+            label: 'Employees',
+            data: [18, 6, 2, 4],
+            backgroundColor: '#EF4444'
+          }]
+        },
+        options: {
+          indexAxis: 'y'
+        }
+      });
+
+      const ageChart = new Chart(document.getElementById('ageChart'), {
+        type: 'bar',
+        data: {
+          labels: ['18-25', '26-35', '36-45', '46-60', '60+'],
+          datasets: [{
+            label: 'Employees',
+            data: [25, 40, 22, 10, 3],
+            backgroundColor: '#60A5FA'
+          }]
+        }
+      });
+
+      const experienceChart = new Chart(document.getElementById('experienceChart'), {
+        type: 'line',
+        data: {
+          labels: ['<1', '1-3', '3-5', '5-10', '10+'],
+          datasets: [{
+            label: 'Employees',
+            data: [10, 35, 25, 15, 5],
+            backgroundColor: '#A78BFA',
+            borderColor: '#A78BFA',
+            fill: true
+          }]
+        }
+      });
+
+      const leaveChart = new Chart(document.getElementById('leaveChart'), {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Avg Leaves',
+            data: [1.8, 2.1, 2.5, 1.6, 1.9, 2.2],
+            backgroundColor: '#34D399',
+            borderColor: '#34D399',
+            fill: true
+          }]
+        }
+      });
+
+      const departmentChart = new Chart(document.getElementById('departmentChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance'],
+          datasets: [{
+            label: 'Employees',
+            data: [25, 10, 18, 7, 5],
+            backgroundColor: '#FBBF24'
+          }]
+        }
+      });
+
+      const joiningTrendChart = new Chart(document.getElementById('joiningTrendChart'), {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'New Joinees',
+            data: [5, 8, 10, 6, 7, 9],
+            backgroundColor: '#60A5FA',
+            borderColor: '#60A5FA',
+            fill: true
+          }]
+        }
+      });
+
+      const attritionChart = new Chart(document.getElementById('attritionChart'), {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Attrition',
+            data: [1, 2, 1, 3, 2, 1],
+            backgroundColor: '#F87171',
+            borderColor: '#F87171',
+            fill: true
+          }]
+        }
+      });
+
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

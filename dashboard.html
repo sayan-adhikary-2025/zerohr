@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ZeroHR Dashboard</title>
+
+  <!-- TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-slate-800 text-white flex items-center justify-between px-6 py-4 shadow">
+    <div class="flex items-center gap-4">
+      <img src="logo.png" alt="Logo" class="w-12 h-12 rounded-full object-cover border-2 border-white">
+      <h1 class="text-xl font-semibold tracking-wide">ZeroHR Dashboard</h1>
+    </div>
+    <div class="text-sm flex items-center gap-2">
+      <span id="employeeName">Welcome</span>
+      <span class="text-red-300 hover:text-red-100 underline cursor-pointer" onclick="logout()">Logout</span>
+    </div>
+  </header>
+
+  <!-- Cards -->
+  <main class="flex-grow flex justify-center items-start py-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl w-full px-6">
+
+      <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl cursor-pointer transition group border border-slate-200" onclick="openModule('recruitment.html')">
+        <div class="flex flex-col items-center gap-3">
+          <i data-lucide="briefcase" class="w-8 h-8 text-blue-500 group-hover:scale-110 transition"></i>
+          <h3 class="text-lg font-semibold">Recruitment</h3>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl cursor-pointer transition group border border-slate-200" onclick="openModule('onboarding.html')">
+        <div class="flex flex-col items-center gap-3">
+          <i data-lucide="user-plus" class="w-8 h-8 text-green-500 group-hover:scale-110 transition"></i>
+          <h3 class="text-lg font-semibold">Onboarding</h3>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl cursor-pointer transition group border border-slate-200" onclick="openModule('leave-tracking.html')">
+        <div class="flex flex-col items-center gap-3">
+          <i data-lucide="calendar-check" class="w-8 h-8 text-amber-500 group-hover:scale-110 transition"></i>
+          <h3 class="text-lg font-semibold">Attendance</h3>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl cursor-pointer transition group border border-slate-200" onclick="openModule('payroll.html')">
+        <div class="flex flex-col items-center gap-3">
+          <i data-lucide="wallet" class="w-8 h-8 text-purple-500 group-hover:scale-110 transition"></i>
+          <h3 class="text-lg font-semibold">Payroll</h3>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl cursor-pointer transition group border border-slate-200" onclick="openModule('analytics.html')">
+        <div class="flex flex-col items-center gap-3">
+          <i data-lucide="bar-chart-3" class="w-8 h-8 text-pink-500 group-hover:scale-110 transition"></i>
+          <h3 class="text-lg font-semibold">Analytics</h3>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Lucide icons load
+    lucide.createIcons();
+
+    function openModule(page) {
+      const data = JSON.parse(localStorage.getItem("ZeroUserData") || "{}");
+      if (!data?.user?.username || !data?.user?.org_id) {
+        alert("Please login again.");
+        window.location.href = "login.html";
+        return;
+      }
+      window.location.href = page;
+    }
+
+    function logout() {
+      localStorage.removeItem("ZeroUserData");
+      window.location.href = "login.html";
+    }
+
+    // Show employee name
+    const data = JSON.parse(localStorage.getItem("ZeroUserData") || "{}");
+    const empName = data?.user?.name || data?.user?.fullname || "User";
+    document.getElementById("employeeName").textContent = `Welcome, ${empName}`;
+  </script>
+</body>
+</html>

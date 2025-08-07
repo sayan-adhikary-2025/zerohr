@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Employee Profile – ZeroHR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <header class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow">
+    <h1 class="text-xl font-semibold">Employee Profile</h1>
+    <a href="onboarding.html" class="text-sm bg-gray-600 px-3 py-1 rounded hover:bg-blue-700">Back</a>
+  </header>
+
+  <main class="p-6 max-w-5xl mx-auto">
+    <!-- Profile Info -->
+    <div class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">Personal Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="Full Name" class="border rounded px-4 py-2" value="Alice Johnson">
+        <input type="text" placeholder="Gender" class="border rounded px-4 py-2" value="Female">
+        <input type="date" placeholder="Date of Birth" class="border rounded px-4 py-2" value="1990-01-01">
+        <input type="email" placeholder="Email" class="border rounded px-4 py-2" value="alice@example.com">
+        <input type="text" placeholder="Mobile" class="border rounded px-4 py-2" value="9876543210">
+        <input type="date" placeholder="Joining Date" class="border rounded px-4 py-2" value="2023-01-01">
+        <input type="text" placeholder="City" class="border rounded px-4 py-2" value="Bangalore">
+        <input type="text" placeholder="Blood Group" class="border rounded px-4 py-2" value="O+">
+        <input type="text" placeholder="Marital Status" class="border rounded px-4 py-2" value="Single">
+        <input type="text" placeholder="Reporting Manager" class="border rounded px-4 py-2" value="John Doe">
+      </div>
+    </div>
+
+    <!-- Work Info -->
+    <div class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">Work Information</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input type="text" placeholder="Employee Code" class="border rounded px-4 py-2" value="EMP001">
+        <input type="text" placeholder="Department" class="border rounded px-4 py-2" value="Engineering">
+        <input type="text" placeholder="Position" class="border rounded px-4 py-2" value="Software Engineer">
+        <input type="text" placeholder="LinkedIn" class="border rounded px-4 py-2" value="linkedin.com/in/alice">
+        <textarea placeholder="About" class="border rounded px-4 py-2 col-span-2">Experienced full-stack developer...</textarea>
+        <textarea placeholder="Hobbies" class="border rounded px-4 py-2 col-span-2">Reading, Music, Chess</textarea>
+        <textarea placeholder="Address" class="border rounded px-4 py-2 col-span-2">123 Main Street, Bangalore</textarea>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="text-lg font-semibold mb-4">Documents</h2>
+      <div class="mb-4">
+        <input type="file" id="docUpload" class="block w-full text-sm text-gray-500">
+        <button class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Upload Document</button>
+      </div>
+      <ul class="list-disc pl-6">
+        <li><a href="#" class="text-blue-600 hover:underline">Offer Letter.pdf</a></li>
+        <li><a href="#" class="text-blue-600 hover:underline">Salary Slip - July.pdf</a></li>
+      </ul>
+    </div>
+
+    <div class="text-right">
+      <button class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">Save Changes</button>
+    </div>
+  </main>
+
+  <script>
+  // ✅ Step 1: Get Employee ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const empId = parseInt(urlParams.get("id"), 10);
+
+  // ✅ Step 2: Fetch stored employee data from localStorage
+  const employees = JSON.parse(localStorage.getItem("employeeData") || "[]");
+
+  // ✅ Step 3: Find the selected employee
+  const employee = employees.find(e => e.id === empId);
+
+  if (employee) {
+    // Personal Info
+    document.querySelectorAll('input[placeholder="Full Name"]')[0].value = employee.fullname || "";
+    document.querySelectorAll('input[placeholder="Gender"]')[0].value = employee.gender || "";
+    document.querySelectorAll('input[placeholder="Date of Birth"]')[0].value = employee.dob || "";
+    document.querySelectorAll('input[placeholder="Email"]')[0].value = employee.email || "";
+    document.querySelectorAll('input[placeholder="Mobile"]')[0].value = employee.mobile || "";
+    document.querySelectorAll('input[placeholder="Joining Date"]')[0].value = employee.joining_date || "";
+    document.querySelectorAll('input[placeholder="City"]')[0].value = employee.cityfrom || "";
+    document.querySelectorAll('input[placeholder="Blood Group"]')[0].value = employee.blood_group || "";
+    document.querySelectorAll('input[placeholder="Marital Status"]')[0].value = employee.marital_status || "";
+    document.querySelectorAll('input[placeholder="Reporting Manager"]')[0].value = employee.reporting_manager || "";
+
+    // Work Info
+    document.querySelectorAll('input[placeholder="Employee Code"]')[0].value = employee.emp_code || "";
+    document.querySelectorAll('input[placeholder="Department"]')[0].value = employee.department || "";
+    document.querySelectorAll('input[placeholder="Position"]')[0].value = employee.position || "";
+    document.querySelectorAll('input[placeholder="LinkedIn"]')[0].value = employee.linkedin || "";
+    document.querySelector('textarea[placeholder="About"]').value = employee.about || "";
+    document.querySelector('textarea[placeholder="Hobbies"]').value = employee.hobbies || "";
+    document.querySelector('textarea[placeholder="Address"]').value = employee.address || "";
+  } else {
+    //alert("Employee not found!");
+  }
+
+  (function () {
+    lucide.createIcons();
+
+    const employee = JSON.parse(localStorage.getItem("SelectedEmployee"));
+    const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+    const user_id = employee?.user_id || userData?.user?.user_id;
+
+    // Prefill
+    window.addEventListener("DOMContentLoaded", () => {
+      const map = {
+        fullname: "Full Name",
+        gender: "Gender",
+        dob: "Date of Birth",
+        email: "Email",
+        mobile: "Mobile",
+        joining_date: "Joining Date",
+        cityfrom: "City",
+        blood_group: "Blood Group",
+        marital_status: "Marital Status",
+        reporting_manager: "Reporting Manager",
+        emp_code: "Employee Code",
+        department: "Department",
+        position: "Position",
+        linkedin: "LinkedIn",
+        about: "About",
+        hobbies: "Hobbies",
+        address: "Address"
+      };
+
+      Object.keys(map).forEach((key) => {
+        const input = [...document.querySelectorAll("input, textarea")].find(
+          el => el.placeholder === map[key]
+        );
+        if (input && employee?.[key]) input.value = employee[key];
+      });
+    });
+
+    // Save
+    document.querySelector("button.bg-green-600").addEventListener("click", async () => {
+      const fields = [...document.querySelectorAll("input, textarea")];
+      const data = { user_id };
+
+      fields.forEach((field) => {
+        const name = field.placeholder.toLowerCase().replace(/[^a-z]/g, "_");
+        const value = field.value?.trim();
+        if (value) {
+          switch (name) {
+            case "full_name": data.fullname = value; break;
+            case "date_of_birth": data.dob = value; break;
+            case "joining_date": data.joining_date = value; break;
+            case "marital_status": data.marital_status = value; break;
+            case "employee_code": data.emp_code = value; break;
+            case "city": data.cityfrom = value; break;
+            case "about": data.about = value; break;
+            default:
+              const fieldMap = {
+                gender: "gender",
+                email: "email",
+                mobile: "mobile",
+                department: "department",
+                position: "position",
+                address: "address",
+                blood_group: "blood_group",
+                reporting_manager: "reporting_manager",
+                linkedin: "linkedin",
+                hobbies: "hobbies"
+              };
+              if (fieldMap[name]) data[fieldMap[name]] = value;
+          }
+        }
+      });
+
+      const orgData = JSON.parse(localStorage.getItem("ZeroUserData"));
+      if (orgData?.user?.org_id) data.org_id = orgData.user.org_id;
+
+      try {
+        const res = await fetch("http://localhost:3000/api/employees/update", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        if (res.ok) {
+          alert("✅ Profile updated successfully!");
+        } else {
+          alert("❌ Update failed: " + (result?.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("Update error:", err);
+        alert("❌ Something went wrong!");
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

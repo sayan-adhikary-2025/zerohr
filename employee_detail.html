@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Details - ZeroHR</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        background-color: #f8fafc;
+        color: #1e293b;
+      }
+      header {
+        background: #1e293b;
+        color: white;
+        padding: 1rem 2rem;
+      }
+      nav {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        background: white;
+      }
+      nav button {
+        background: none;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        color: #1e293b;
+        font-weight: 500;
+        border-bottom: 3px solid transparent;
+      }
+      nav button.active {
+        border-bottom: 3px solid #1e293b;
+      }
+      .tab-content {
+        display: none;
+        padding: 2rem;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .profile-section p {
+        margin: 0.5rem 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-top: 1rem;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+      }
+      th,
+      td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+      }
+      th {
+        background-color: #f1f5f9;
+      }
+      button.action {
+        padding: 0.4rem 1rem;
+        border: none;
+        border-radius: 6px;
+        margin-right: 0.5rem;
+        cursor: pointer;
+      }
+      .approve {
+        background: #22c55e;
+        color: white;
+      }
+      .reject {
+        background: #ef4444;
+        color: white;
+      }
+
+      .employee-profile {
+        display: flex;
+        gap: 2rem;
+        margin-top: 2rem;
+      }
+
+      .employee-profile .left img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 2px solid #94a3b8;
+      }
+
+      .employee-profile .right {
+        flex: 1;
+        font-size: 1rem;
+        line-height: 1.8;
+      }
+
+      .employee-profile .right h3 {
+        margin: 0 0 1rem;
+        font-size: 1.5rem;
+        color: #0f172a;
+      }
+
+      .profile-container {
+        display: flex;
+        gap: 2rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .profile-left {
+        flex: 0 0 220px;
+        text-align: center;
+      }
+
+      .profile-left img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 3px solid #cbd5e1;
+        margin-bottom: 1rem;
+      }
+
+      .profile-left h3 {
+        margin: 0.2rem 0;
+        font-size: 1.4rem;
+        color: #0f172a;
+      }
+
+      .profile-left .position {
+        color: #475569;
+        font-size: 1rem;
+        margin: 0.2rem 0;
+      }
+
+      .profile-left .department {
+        font-size: 0.95rem;
+        color: #64748b;
+      }
+
+      .profile-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .info-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        font-size: 1rem;
+      }
+
+      .info-group div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        color: #334155;
+      }
+
+      .info-group span,
+      .info-group a {
+        font-weight: 500;
+        color: #0f172a;
+        text-decoration: none;
+      }
+
+      .info-box {
+        background: #f8fafc;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .info-box h4 {
+        margin: 0 0 0.5rem;
+        font-size: 1rem;
+        color: #475569;
+      }
+
+      .leave-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+      }
+
+      .leave-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 1.2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+
+      .leave-card h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #1e293b;
+      }
+
+      .leave-card p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #475569;
+      }
+
+      .leave-card .actions {
+        margin-top: 0.7rem;
+      }
+
+      .status-chip {
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      .status-Pending {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .status-Accepted {
+        background: #d1fae5;
+        color: #047857;
+      }
+      .status-Rejected {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h2>Employee Details - ZeroHR</h2>
+    </header>
+
+    <nav>
+      <button onclick="switchTab('profileTab')" class="active">Profile</button>
+      <button onclick="switchTab('leaveTab')">Leave Requests</button>
+      <button onclick="switchTab('wfhTab')">WFH Requests</button>
+    </nav>
+
+    <section id="profileTab" class="tab-content active">
+      <div class="profile-container">
+        <div class="profile-left">
+          <img id="empProfilePhoto" src="" alt="Profile Photo" />
+          <h3 id="empFullName"></h3>
+          <p id="empPosition" class="position"></p>
+          <p id="empDepartment" class="department"></p>
+        </div>
+        <div class="profile-right">
+          <div class="info-group">
+            <div><strong>Email:</strong><span id="empEmail"></span></div>
+            <div><strong>Mobile:</strong><span id="empMobile"></span></div>
+            <div><strong>DOB:</strong><span id="empDob"></span></div>
+            <div>
+              <strong>Joining Date:</strong><span id="empJoining"></span>
+            </div>
+          </div>
+
+          <div class="info-group">
+            <div><strong>City From:</strong><span id="empCity"></span></div>
+            <div>
+              <strong>LinkedIn:</strong
+              ><a id="empLinkedIn" href="#" target="_blank">View</a>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <h4>About</h4>
+            <p id="empAbout"></p>
+          </div>
+
+          <div class="info-box">
+            <h4>Hobbies</h4>
+            <p id="empHobbies"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="leaveTab" class="tab-content">
+      <h3 style="margin-top: 2rem">Leave Request History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Type</th>
+            <th>Duration</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="leaveHistoryTable"></tbody>
+      </table>
+    </section>
+
+    <section id="wfhTab" class="tab-content">
+      <h3 style="margin-top: 2rem">WFH Request History</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>From</th>
+            <th>To</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="wfhHistoryTable"></tbody>
+      </table>
+    </section>
+
+    <script>
+      const employeeUserId = localStorage.getItem("ZeroEmployeeData");
+      const username = localStorage.getItem("username");
+
+      function switchTab(tabId) {
+        document
+          .querySelectorAll("nav button")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((sec) => sec.classList.remove("active"));
+        document
+          .querySelector(`nav button[onclick*='${tabId}']`)
+          .classList.add("active");
+        document.getElementById(tabId).classList.add("active");
+
+        if (tabId === "leaveTab") loadLeaveRequests();
+        if (tabId === "wfhTab") loadWFHRequests();
+      }
+
+      async function loadEmployeeDetails() {
+        const res = await fetch(
+          `http://localhost:3000/api/employee/profile/${employeeUserId}`
+        );
+        const data = await res.json();
+        const div = document.getElementById("profileDetails");
+        div.innerHTML = `
+        <p><strong>Name:</strong> ${data.fullname}</p>
+        <p><strong>Gender:</strong> ${data.gender}</p>
+        <p><strong>DOB:</strong> ${data.dob}</p>
+        <p><strong>Mobile:</strong> ${data.mobile}</p>
+        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Department:</strong> ${data.department}</p>
+        <p><strong>Position:</strong> ${data.position}</p>
+        <p><strong>City:</strong> ${data.cityfrom}</p>
+        <p><strong>About:</strong> ${data.about}</p>
+      `;
+      }
+
+      async function loadLeaveRequests() {
+        const res = await fetch(
+          `http://localhost:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+        );
+        const data = await res.json();
+
+        const tbody = document.getElementById("leaveHistoryTable");
+        tbody.innerHTML = "";
+
+        data.history.forEach((item, index) => {
+          if (item.leave_wfh === "WFH") return;
+
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+      <td>${item.from_date}</td>
+      <td>${item.to_date}</td>
+      <td>${item.type}</td>
+      <td>${item.duration}</td>
+      <td>${item.reason}</td>
+      <td><span class="status-chip status-${item.status}">${
+            item.status
+          }</span></td>
+      <td>
+        ${
+          item.status === "Pending"
+            ? `
+          <button class="action approve" onclick="updateLeave('${item.id}', 'Accepted')">Accept</button>
+          <button class="action reject" onclick="updateLeave('${item.id}', 'Rejected')">Reject</button>
+        `
+            : ""
+        }
+      </td>
+    `;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      async function loadWFHRequests() {
+        const res = await fetch(
+          `http://localhost:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+        );
+        const data = await res.json();
+
+        const tbody = document.getElementById("wfhHistoryTable");
+        tbody.innerHTML = "";
+
+        data.history.forEach((item, index) => {
+          if (item.leave_wfh === "Leave") return;
+
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+      <td>${item.from_date}</td>
+      <td>${item.to_date}</td>
+      <td>${item.reason}</td>
+      <td><span class="status-chip status-${item.status}">${
+            item.status
+          }</span></td>
+      <td>
+        ${
+          item.status === "Pending"
+            ? `
+          <button class="action approve" onclick="updateWFH('${item.id}', 'Accepted')">Accept</button>
+          <button class="action reject" onclick="updateWFH('${item.id}', 'Rejected')">Reject</button>
+        `
+            : ""
+        }
+      </td>
+    `;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      async function updateLeave(id, action) {
+        const res = await fetch(
+          `http://localhost:3000/api/employee/leave-action`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leave_id: id, action }),
+          }
+        );
+        const result = await res.json();
+        if (res.ok) {
+          alert(result.message || "Leave accepted");
+          loadLeaveRequests();
+        } else {
+          alert(result.error || "Failed to update Leave");
+        }
+      }
+
+      async function updateWFH(id, action) {
+        const res = await fetch(
+          `http://localhost:3000/api/employee/leave-action`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ leave_id: id, action }),
+          }
+        );
+
+        const result = await res.json();
+        if (res.ok) {
+          alert(result.message || "WFH accepted");
+          loadWFHRequests();
+        } else {
+          alert(result.error || "Failed to update WFH status");
+        }
+      }
+
+      loadEmployeeDetails();
+      loadLeaveRequests();
+      loadWFHRequests();
+
+      const empData = JSON.parse(localStorage.getItem("ZeroEmployeeData"));
+
+      if (!empData) {
+        alert("Employee data missing. Returning to employee page.");
+        window.location.href = "employee.html";
+      }
+
+      document.getElementById("empProfilePhoto").src = empData.profile_photo
+        ? empData.profile_photo
+        : empData.gender?.toLowerCase() === "female"
+        ? "https://cdn-icons-png.flaticon.com/512/4140/4140047.png"
+        : "https://cdn-icons-png.flaticon.com/512/4140/4140061.png";
+      document.getElementById("empFullName").textContent =
+        empData.fullname || "-";
+      document.getElementById("empPosition").textContent =
+        empData.position || "-";
+      document.getElementById("empDepartment").textContent =
+        empData.department || "-";
+      document.getElementById("empEmail").textContent = empData.email || "-";
+      document.getElementById("empMobile").textContent = empData.mobile || "-";
+      document.getElementById("empDob").textContent = empData.dob || "-";
+      document.getElementById("empJoining").textContent =
+        empData.joining_date || "-";
+      document.getElementById("empCity").textContent = empData.cityfrom || "-";
+      document.getElementById("empAbout").textContent = empData.about || "-";
+      document.getElementById("empHobbies").textContent =
+        empData.hobbies || "-";
+      document.getElementById("empuser_id").href = empData.user_id || "#";
+    </script>
+  </body>
+</html>
