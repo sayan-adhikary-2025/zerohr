@@ -100,6 +100,7 @@
       return '₹' + num.toString().replace(/\B(?=(\d{2})+(?!\d))/g, ",");
     }
 
+    
     async function loadJobDetails() {
       try {
         const res = await fetch(`http://13.201.134.228:3000/api/job-postings/${job_id}`);
