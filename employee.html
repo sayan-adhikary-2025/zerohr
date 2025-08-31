@@ -833,7 +833,7 @@
       const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
       if (!userData?.user || userData.user.user_type !== 2) {
         alert("Unauthorized access or not logged in. Redirecting to login page.");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
       } else {
         document.getElementById("employeeName").textContent = userData.user.fullname || userData.user.username || "Employee";
         localStorage.setItem("username", userData.user.username);
@@ -1249,7 +1249,7 @@
         localStorage.removeItem("username");
         localStorage.removeItem("org_id");
         localStorage.removeItem("my_data");
-        window.location.href = "login.html";
+        window.location.href = "index.html";
       }
 
     </script>

@@ -316,7 +316,7 @@
     const userData = JSON.parse(localStorage.getItem("ZeroUserData") || "{}");
     if (!userData?.user?.org_id || !userData?.user?.username) {
       alert("Session expired. Please login again.");
-      window.location.href = "login.html";
+      window.location.href = "index.html";
     }
     const username = userData.user.username;
     const org_id = userData.user.org_id;
