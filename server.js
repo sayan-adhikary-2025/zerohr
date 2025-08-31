@@ -49,8 +49,6 @@ app.listen(PORT, () => {
 
 module.exports = db;
 
-
-
 // LOGIN API
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
@@ -170,7 +168,6 @@ app.post("/api/job-postings", async (req, res) => {
   }
 });
 
-
 // GET: Job listings for user’s org
 app.get("/api/job-postings/user/:username", async (req, res) => {
   const { username } = req.params;
@@ -200,7 +197,6 @@ app.get("/api/job-postings/user/:username", async (req, res) => {
     res.status(500).json({ status: 0, error: "Database error" });
   }
 });
-
 
 // GET: Fetch single job by ID (for job-view.html)
 app.get("/api/job-postings/:id", async (req, res) => {
@@ -291,13 +287,14 @@ app.post("/api/apply", upload.single("resume"), async (req, res) => {
       [job_id]
     );
 
-    return res.status(201).json({ message: "Application submitted successfully" });
+    return res
+      .status(201)
+      .json({ message: "Application submitted successfully" });
   } catch (err) {
     console.error("❌ Application insert error:", err.message);
     return res.status(500).json({ error: "Failed to submit application" });
   }
 });
-
 
 // Get All Applications for Org
 app.get("/api/applications/org/:org_id", async (req, res) => {
@@ -340,9 +337,6 @@ app.get("/api/applications/:id", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-
-
 
 // Update Application Status
 app.put("/api/applications/:id/status", async (req, res) => {
@@ -501,7 +495,6 @@ app.get("/api/employee/leave-wfh", async (req, res) => {
   }
 });
 
-
 // Accept or Reject a leave/wfh
 app.post("/api/employee/leave-action", async (req, res) => {
   const { leave_id, action } = req.body;
@@ -543,7 +536,7 @@ app.post("/api/employee/leave-action", async (req, res) => {
     // Step 3: If WFH, accept directly
     if (leave_wfh === "WFH") {
       await db.query(
-        `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
+        `UPDATE leave_requests SET leave_requests.status = 'Accepted' WHERE id = $1`,
         [leave_id]
       );
       return res.status(200).json({ message: "WFH accepted successfully" });
@@ -589,7 +582,7 @@ app.post("/api/employee/leave-action", async (req, res) => {
     await db.query("BEGIN");
 
     await db.query(
-      `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
+      `UPDATE leave_requests SET leave_requests.status = 'Accepted' WHERE id = $1`,
       [leave_id]
     );
 
@@ -603,14 +596,12 @@ app.post("/api/employee/leave-action", async (req, res) => {
     return res
       .status(200)
       .json({ message: "Leave accepted and balance updated" });
-
   } catch (err) {
     await db.query("ROLLBACK").catch(() => {});
     console.error("❌ Leave action error:", err.message);
     return res.status(500).json({ error: "Failed to process leave action" });
   }
 });
-
 
 // Fetch Employees under a Manager
 app.post("/api/manager/employees", async (req, res) => {
@@ -659,7 +650,6 @@ app.post("/api/manager/employees", async (req, res) => {
   }
 });
 
-
 // Fetch Employee Data Using username
 app.post("/api/employee/details", async (req, res) => {
   const { username } = req.body;
@@ -690,9 +680,7 @@ app.post("/api/employee/details", async (req, res) => {
     );
 
     if (empResult.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "Employee details not found" });
+      return res.status(404).json({ error: "Employee details not found" });
     }
 
     return res.json(empResult.rows[0]);
@@ -704,17 +692,21 @@ app.post("/api/employee/details", async (req, res) => {
   }
 });
 
-
 // Update editable employee profile fields
 app.post("/api/employee/update-profile", async (req, res) => {
-  const { username, email, address, dob, marital_status, blood_group } = req.body;
+  const { username, email, address, dob, marital_status, blood_group } =
+    req.body;
 
   if (!username) return res.status(400).json({ error: "Username is required" });
 
   try {
     // Step 1: Get user_id
-    const userResult = await db.query("SELECT id FROM users WHERE username = $1", [username]);
-    if (userResult.rows.length === 0) return res.status(404).json({ error: "User not found" });
+    const userResult = await db.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+    if (userResult.rows.length === 0)
+      return res.status(404).json({ error: "User not found" });
 
     const userId = userResult.rows[0].id;
 
@@ -728,29 +720,46 @@ app.post("/api/employee/update-profile", async (req, res) => {
           blood_group = $5
       WHERE user_id = $6
     `;
-    await db.query(updateQuery, [email, address, dob, marital_status, blood_group, userId]);
+    await db.query(updateQuery, [
+      email,
+      address,
+      dob,
+      marital_status,
+      blood_group,
+      userId,
+    ]);
 
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Update profile error:", err.message);
-    res.status(500).json({ error: "Database update failed", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Database update failed", details: err.message });
   }
 });
 
-
+// Home Summary
 app.get("/api/employee/home-summary", async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ error: "username is required" });
 
   try {
     // Step 1: Get user_id
-    const userResult = await db.query("SELECT id FROM users WHERE username = $1", [username]);
-    if (userResult.rows.length === 0) return res.status(404).json({ error: "User not found" });
+    const userResult = await db.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+    if (userResult.rows.length === 0)
+      return res.status(404).json({ error: "User not found" });
     const userId = userResult.rows[0].id;
 
     // Step 2: Fetch employee details
-    const empResult = await db.query("SELECT * FROM employee WHERE user_id = $1", [userId]);
-    if (empResult.rows.length === 0) return res.status(404).json({ error: "Employee not found" });
+    const empResult = await db.query(
+      "SELECT * FROM employee WHERE user_id = $1",
+      [userId]
+    );
+    if (empResult.rows.length === 0)
+      return res.status(404).json({ error: "Employee not found" });
     const empRow = empResult.rows[0];
 
     const today = new Date().toISOString().split("T")[0];
@@ -758,45 +767,46 @@ app.get("/api/employee/home-summary", async (req, res) => {
 
     // Step 3: Parallel queries
     const [
-      leavesTodayRows,
-      leavesTomorrowRows,
-      birthdayRows,
-      holidayRows,
-      notificationRows,
-      jobRows,
-      leaveMaster
+      leavesTodayRes,
+      leavesTomorrowRes,
+      birthdayRes,
+      jobRes,
+      leaveMasterRes
     ] = await Promise.all([
       db.query(
-        `SELECT fullname, department FROM employee 
-         JOIN leave_requests ON employee.user_id = leave_requests.user_id
-         WHERE leave_requests.from_date <= $1 AND leave_requests.to_date >= $2
-           AND leave_requests.status = 'Accepted' AND leave_requests.leave_wfh = 'Leave'`,
+        `SELECT e.fullname, e.department
+         FROM employee e
+         JOIN leave_requests l ON e.user_id = l.user_id
+         WHERE l.from_date <= $1 AND l.to_date >= $2
+           AND l.status = 'Accepted' AND l.leave_wfh = 'Leave'`,
         [today, today]
       ),
       db.query(
-        `SELECT fullname, department FROM employee 
-         JOIN leave_requests ON employee.user_id = leave_requests.user_id
-         WHERE from_date <= $1 AND to_date >= $2 AND status = 'Accepted' AND leave_wfh = 'Leave'`,
+        `SELECT e.fullname, e.department
+         FROM employee e
+         JOIN leave_requests l ON e.user_id = l.user_id
+         WHERE l.from_date <= $1 AND l.to_date >= $2
+           AND l.status = 'Accepted' AND l.leave_wfh = 'Leave'`,
         [tomorrow, tomorrow]
       ),
       db.query(
-        `SELECT fullname, department FROM employee
+        `SELECT fullname, department
+         FROM employee
          WHERE TO_CHAR(dob, 'MM-DD') = TO_CHAR(CURRENT_DATE, 'MM-DD')`
       ),
       db.query(
-        `SELECT occasion, date FROM holidays WHERE date >= CURRENT_DATE ORDER BY date ASC LIMIT 3`
-      ),
-      db.query(
-        `SELECT type, message, created_at FROM hr_notifications ORDER BY created_at DESC LIMIT 5`
-      ),
-      db.query(
-        `SELECT title, department FROM job_postings WHERE status = 'Active' ORDER BY created_at DESC LIMIT 5`
+        `SELECT title, department
+         FROM job_postings
+         WHERE status = 'Active'
+         ORDER BY created_at DESC
+         LIMIT 5`
       ),
       db.query(
         `SELECT pending_casual_leaves, pending_sick_leaves, pending_earned_leaves
-         FROM leave_master WHERE user_id = $1`,
+         FROM leave_master
+         WHERE user_id = $1`,
         [userId]
-      )
+      ),
     ]);
 
     res.json({
@@ -806,16 +816,14 @@ app.get("/api/employee/home-summary", async (req, res) => {
       joining_date: empRow.joining_date,
       email: empRow.email,
 
-      remaining_cl: leaveMaster.rows[0]?.pending_casual_leaves || 0,
-      remaining_sl: leaveMaster.rows[0]?.pending_sick_leaves || 0,
-      remaining_el: leaveMaster.rows[0]?.pending_earned_leaves || 0,
+      remaining_cl: leaveMasterRes.rows[0]?.pending_casual_leaves || 0,
+      remaining_sl: leaveMasterRes.rows[0]?.pending_sick_leaves || 0,
+      remaining_el: leaveMasterRes.rows[0]?.pending_earned_leaves || 0,
 
-      leave_today: leavesTodayRows.rows,
-      leave_tomorrow: leavesTomorrowRows.rows,
-      birthdays: birthdayRows.rows,
-      holidays: holidayRows.rows,
-      notifications: notificationRows.rows,
-      jobs: jobRows.rows,
+      leave_today: leavesTodayRes.rows,
+      leave_tomorrow: leavesTomorrowRes.rows,
+      birthdays: birthdayRes.rows,
+      jobs: jobRes.rows,
     });
   } catch (err) {
     console.error("❌ Fetch home summary error:", err.message);
@@ -843,7 +851,6 @@ app.get("/api/fetch_employees", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 // PUT: Update employee by user_id
 app.put("/api/employees/update", async (req, res) => {
@@ -939,11 +946,10 @@ app.put("/api/employees/update", async (req, res) => {
   }
 });
 
-
 // POST: Add new employee with user account
 app.post("/api/add_employee", async (req, res) => {
   const {
-    org_id, 
+    org_id,
     fullname,
     user_type,
     username,
@@ -955,20 +961,20 @@ app.post("/api/add_employee", async (req, res) => {
 
   try {
     // 1. Insert into users table
-    const userInsert = await dbRunAsync(
+    const userInsert = await db.query(
       `INSERT INTO users (
         org_id, fullname, user_type, username, password
-      ) VALUES (?, ?, ?, ?, ?)`,
+      ) VALUES ($1, $2, $3, $4, $5)`,
       [org_id, fullname, user_type, username, password]
     );
 
     const user_id = userInsert.lastID;
 
     // 2. Insert into employee table
-    const employeeInsert = await dbRunAsync(
+    const employeeInsert = await db.query(
       `INSERT INTO employee (
         org_id, user_id, fullname, emp_code, position, department
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6)`,
       [org_id, user_id, fullname, emp_code, position, department]
     );
 
