@@ -883,7 +883,7 @@
         e.preventDefault();
 
         const isWFH = document.getElementById("applyForm").dataset.type === "wfh";
-        const url = "http://localhost:3000/api/employee/apply";
+        const url = "http://13.201.134.228:3000/api/employee/apply";
 
         const payload = {
           username: userData.user.username,
@@ -942,7 +942,7 @@
           return;
         }
 
-        const res = await fetch(`http://localhost:3000/api/employee/leave-wfh?user_id=${userId}`);
+        const res = await fetch(`http://13.201.134.228:3000/api/employee/leave-wfh?user_id=${userId}`);
         const data = await res.json();
 
         document.getElementById("remainingCL").textContent = data.remaining_cl;
@@ -989,7 +989,7 @@
         teamCards.innerHTML = "<p>Loading team members...</p>";
 
         try {
-          const res = await fetch("http://localhost:3000/api/manager/employees", {
+          const res = await fetch("http://13.201.134.228:3000/api/manager/employees", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1034,7 +1034,7 @@
       // Fetch employee details using the username and store in localStorage
       async function fetchEmployeeDetails() {
         try {
-          const res = await fetch("http://localhost:3000/api/employee/details", {
+          const res = await fetch("http://13.201.134.228:3000/api/employee/details", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1057,7 +1057,7 @@
         profileContainer.innerHTML = "<p>Loading profile...</p>";
 
         try {
-          const res = await fetch("http://localhost:3000/api/employee/details", {
+          const res = await fetch("http://13.201.134.228:3000/api/employee/details", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1147,7 +1147,7 @@
 
         if (!username) return;
 
-        const res = await fetch(`http://localhost:3000/api/employee/home-summary?username=${username}`);
+        const res = await fetch(`http://13.201.134.228:3000/api/employee/home-summary?username=${username}`);
         const data = await res.json();
 
         document.getElementById("homeName").textContent = data.fullname || "--";
@@ -1233,7 +1233,7 @@
         <span class="document-tag">${doc.tag}</span>
       `;
             card.onclick = () => {
-              const fileUrl = `http://localhost:3000/api/employee/documents/${username}/${doc.filename}`;
+              const fileUrl = `http://13.201.134.228:3000/api/employee/documents/${username}/${doc.filename}`;
               window.open(fileUrl, "_blank");
             };
             container.appendChild(card);

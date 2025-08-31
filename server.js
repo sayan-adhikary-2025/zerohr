@@ -341,28 +341,33 @@ app.get("/api/applications/:id", async (req, res) => {
   }
 });
 
-// NEED TO SHIFT TO POSTGRES
+
+
+
 // Update Application Status
-app.put("/api/applications/:id/status", (req, res) => {
+app.put("/api/applications/:id/status", async (req, res) => {
   const id = req.params.id;
   const { status } = req.body;
-  db.run(
-    "UPDATE job_applications SET status = ? WHERE id = ?",
-    [status, id],
-    function (err) {
-      if (err) return res.status(500).json({ error: "Update failed" });
-      res.json({ success: true });
+
+  try {
+    const result = await db.query(
+      "UPDATE job_applications SET status = $1 WHERE id = $2",
+      [status, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Application not found" });
     }
-  );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Update failed:", err.message);
+    res.status(500).json({ error: "Update failed" });
+  }
 });
 
-// View Resume File Publicly
-
-app.use("/uploads", express.static("uploads"));
-
-// Apply Leave
-
-app.post("/api/employee/apply", (req, res) => {
+// Apply Leave / WFH
+app.post("/api/employee/apply", async (req, res) => {
   const {
     username,
     from_date,
@@ -377,7 +382,6 @@ app.post("/api/employee/apply", (req, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // Validate input values
   const isLeave = leave_wfh === "Leave";
   const validLeaveTypes = ["Sick Leave", "Casual Leave", "Earned Leave"];
   const validDurations = ["Full Day", "Half Day"];
@@ -391,71 +395,74 @@ app.post("/api/employee/apply", (req, res) => {
     }
   }
 
-  // Step 1: Fetch user_id
-  const userQuery = "SELECT id FROM users WHERE username = ?";
-  db.get(userQuery, [username], (err, userRow) => {
-    if (err || !userRow) {
-      console.error("User lookup error:", err?.message);
-      return res.status(500).json({ error: "User not found" });
+  try {
+    // Step 1: Get user_id
+    const userResult = await db.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    const user_id = userRow.id;
+    const user_id = userResult.rows[0].id;
 
-    // Step 2: Insert into leave_requests
+    // Step 2: Insert leave request
     const insertQuery = `
       INSERT INTO leave_requests (
         user_id, username, leave_wfh, from_date, to_date, duration, type, reason, status, created_on
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending', CURRENT_TIMESTAMP)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Pending', CURRENT_TIMESTAMP)
     `;
 
     const finalLeaveType = isLeave ? leave_type : "";
     const finalDuration = isLeave ? duration : "";
 
-    db.run(
-      insertQuery,
-      [
-        user_id,
-        username,
-        leave_wfh,
-        from_date,
-        to_date,
-        finalDuration,
-        finalLeaveType,
-        reason,
-      ],
-      function (err) {
-        if (err) {
-          console.error("Insert error:", err.message);
-          return res.status(500).json({ error: "Failed to submit request" });
-        }
+    await db.query(insertQuery, [
+      user_id,
+      username,
+      leave_wfh,
+      from_date,
+      to_date,
+      finalDuration,
+      finalLeaveType,
+      reason,
+    ]);
 
-        return res
-          .status(201)
-          .json({ message: `${leave_wfh} request submitted successfully` });
-      }
-    );
-  });
+    res
+      .status(201)
+      .json({ message: `${leave_wfh} request submitted successfully` });
+  } catch (err) {
+    console.error("❌ Leave request failed:", err.message);
+    res.status(500).json({ error: "Failed to submit request" });
+  }
 });
 
-//Fetch Leave and WFH
-app.get("/api/employee/leave-wfh", (req, res) => {
+// Fetch Leave and WFH
+app.get("/api/employee/leave-wfh", async (req, res) => {
   const { user_id } = req.query;
 
   if (!user_id) {
     return res.status(400).json({ error: "Missing user_id" });
   }
 
-  // Step 1: Fetch leave balances
-  const balanceQuery = `
-    SELECT fy_casual_leaves, fy_sick_leaves, fy_earned_leaves, pending_casual_leaves, pending_sick_leaves, pending_earned_leaves
-    FROM leave_master
-    WHERE user_id = ?
-  `;
+  try {
+    // Step 1: Fetch leave balances
+    const balanceResult = await db.query(
+      `
+      SELECT fy_casual_leaves, fy_sick_leaves, fy_earned_leaves,
+             pending_casual_leaves, pending_sick_leaves, pending_earned_leaves
+      FROM leave_master
+      WHERE user_id = $1
+    `,
+      [user_id]
+    );
 
-  db.get(balanceQuery, [user_id], (err, balances) => {
-    if (err || !balances) {
-      return res.status(500).json({ error: "Error fetching balances" });
+    if (balanceResult.rows.length === 0) {
+      return res.status(404).json({ error: "Leave balance not found" });
     }
+
+    const balances = balanceResult.rows[0];
 
     const {
       fy_casual_leaves,
@@ -467,207 +474,194 @@ app.get("/api/employee/leave-wfh", (req, res) => {
     } = balances;
 
     // Step 2: Fetch leave & WFH history
-    const leaveQuery = `
+    const leaveResult = await db.query(
+      `
       SELECT id, leave_wfh, from_date, to_date, duration, type, reason, status, created_on
       FROM leave_requests
-      WHERE user_id = ?
-    `;
+      WHERE user_id = $1
+      ORDER BY created_on DESC
+    `,
+      [user_id]
+    );
 
-    db.all(leaveQuery, [user_id], (err, leaves = []) => {
-      if (err) {
-        console.error("Error fetching leave history:", err.message);
-        return res.status(500).json({ error: "Error fetching leaves" });
-      }
+    const history = leaveResult.rows;
 
-      // Step 4: Sort leaves and wfh
-      const history = [...leaves].sort(
-        (a, b) => new Date(b.created_on) - new Date(a.created_on)
-      );
-
-      res.json({
-        remaining_cl: pending_casual_leaves,
-        remaining_sl: pending_sick_leaves,
-        remaining_el: pending_earned_leaves,
-        fy_cl: fy_casual_leaves,
-        fy_sl: fy_sick_leaves,
-        fy_el: fy_earned_leaves,
-
-        history,
-      });
+    res.json({
+      remaining_cl: pending_casual_leaves,
+      remaining_sl: pending_sick_leaves,
+      remaining_el: pending_earned_leaves,
+      fy_cl: fy_casual_leaves,
+      fy_sl: fy_sick_leaves,
+      fy_el: fy_earned_leaves,
+      history,
     });
-  });
+  } catch (err) {
+    console.error("❌ Error fetching leave/wfh:", err.message);
+    res.status(500).json({ error: "Error fetching leave/WFH data" });
+  }
 });
 
+
 // Accept or Reject a leave/wfh
-app.post("/api/employee/leave-action", (req, res) => {
+app.post("/api/employee/leave-action", async (req, res) => {
   const { leave_id, action } = req.body;
 
   if (!leave_id || !["Accepted", "Rejected"].includes(action)) {
     return res.status(400).json({ error: "Invalid input" });
   }
 
-  // Step 1: Get leave details
-  const getLeaveQuery = `
-    SELECT id, user_id, type, status, leave_wfh 
-    FROM leave_requests 
-    WHERE id = ?
-  `;
+  try {
+    // Step 1: Get leave details
+    const leaveResult = await db.query(
+      `SELECT id, user_id, type, status, leave_wfh 
+       FROM leave_requests 
+       WHERE id = $1`,
+      [leave_id]
+    );
 
-  db.get(getLeaveQuery, [leave_id], (err, leave) => {
-    if (err || !leave) {
-      console.error("Leave lookup failed:", err?.message);
+    if (leaveResult.rows.length === 0) {
       return res.status(404).json({ error: "Leave not found" });
     }
+
+    const leave = leaveResult.rows[0];
 
     if (leave.status !== "Pending") {
       return res.status(400).json({ error: "Leave already processed" });
     }
 
-    const { user_id, type } = leave;
+    const { user_id, type, leave_wfh } = leave;
 
-    // If rejected, update status only
+    // Step 2: If rejected
     if (action === "Rejected") {
-      const update = `UPDATE leave_requests SET status = 'Rejected' WHERE id = ?`;
-      return db.run(update, [leave_id], function (err) {
-        if (err)
-          return res.status(500).json({ error: "Failed to update status" });
-        return res.status(200).json({ message: "Rejected successfully" });
-      });
+      await db.query(
+        `UPDATE leave_requests SET status = 'Rejected' WHERE id = $1`,
+        [leave_id]
+      );
+      return res.status(200).json({ message: "Rejected successfully" });
     }
 
-    //Accept if leave_wfh = WFH
-    if (leave.leave_wfh === "WFH") {
-      const wfhupdate = `UPDATE leave_requests SET status = 'Accepted' WHERE id = ?`;
-      return db.run(wfhupdate, [leave_id], function (err) {
-        if (err)
-          return res.status(500).json({ error: "Failed to update status" });
-        return res.status(200).json({ message: "WFH accepted successfully" });
-      });
-    } else {
-      // Leave Accepted: Check and update pending leaves
-      let leaveColumn = "";
-      if (type === "Sick Leave") leaveColumn = "pending_sick_leaves";
-      else if (type === "Casual Leave") leaveColumn = "pending_casual_leaves";
-      else if (type === "Earned Leave") leaveColumn = "pending_earned_leaves";
-
-      //else return res.status(400).json({ error: "Invalid leave type" });
-
-      // Step 2: Get pending leave count
-      const getPending = `SELECT ${leaveColumn} FROM leave_master WHERE user_id = ?`;
-
-      db.get(getPending, [user_id], (err, result) => {
-        if (err || !result) {
-          console.error("leave_master fetch error:", err?.message);
-          return res.status(500).json({ error: "Leave master not found" });
-        }
-
-        if (result[leaveColumn] <= 0) {
-          return res.status(400).json({ error: `No Pending ${type}` });
-        }
-
-        // Step 3: Update status and decrement leave
-        const updateLeave = `UPDATE leave_requests SET status = 'Accepted' WHERE id = ?`;
-
-        db.get(
-          `SELECT duration FROM leave_requests WHERE id = ?`,
-          [leave_id],
-          (err, row) => {
-            if (err)
-              return res
-                .status(500)
-                .json({ error: "Failed to fetch leave type" });
-
-            const duration = row?.duration;
-            if (!duration)
-              return res
-                .status(400)
-                .json({ error: "Leave duration not found" });
-
-            const decrement = duration === "Half Day" ? 0.5 : 1;
-            const updateMaster = `UPDATE leave_master SET ${leaveColumn} = ${leaveColumn} - ? WHERE user_id = ?`;
-
-            db.serialize(() => {
-              db.run(updateLeave, [leave_id], function (err) {
-                if (err)
-                  return res
-                    .status(500)
-                    .json({ error: "Failed to update leave status" });
-
-                db.run(updateMaster, [decrement, user_id], function (err) {
-                  if (err)
-                    return res
-                      .status(500)
-                      .json({ error: "Failed to update leave balance" });
-                  return res
-                    .status(200)
-                    .json({ message: "Leave accepted and balance updated" });
-
-                });
-              });
-            });
-          }
-        );
-      });
+    // Step 3: If WFH, accept directly
+    if (leave_wfh === "WFH") {
+      await db.query(
+        `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
+        [leave_id]
+      );
+      return res.status(200).json({ message: "WFH accepted successfully" });
     }
-  });
+
+    // Step 4: For Leave, determine leave column
+    let leaveColumn = "";
+    if (type === "Sick Leave") leaveColumn = "pending_sick_leaves";
+    else if (type === "Casual Leave") leaveColumn = "pending_casual_leaves";
+    else if (type === "Earned Leave") leaveColumn = "pending_earned_leaves";
+    else return res.status(400).json({ error: "Invalid leave type" });
+
+    // Step 5: Get pending leave count
+    const pendingResult = await db.query(
+      `SELECT ${leaveColumn} FROM leave_master WHERE user_id = $1`,
+      [user_id]
+    );
+
+    if (pendingResult.rows.length === 0) {
+      return res.status(404).json({ error: "Leave master not found" });
+    }
+
+    const pendingLeaves = pendingResult.rows[0][leaveColumn];
+
+    if (pendingLeaves <= 0) {
+      return res.status(400).json({ error: `No Pending ${type}` });
+    }
+
+    // Step 6: Get duration of leave
+    const durationResult = await db.query(
+      `SELECT duration FROM leave_requests WHERE id = $1`,
+      [leave_id]
+    );
+
+    const duration = durationResult.rows[0]?.duration;
+    if (!duration) {
+      return res.status(400).json({ error: "Leave duration not found" });
+    }
+
+    const decrement = duration === "Half Day" ? 0.5 : 1;
+
+    // Step 7: Update leave status and decrement leave balance in a transaction
+    await db.query("BEGIN");
+
+    await db.query(
+      `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
+      [leave_id]
+    );
+
+    await db.query(
+      `UPDATE leave_master SET ${leaveColumn} = ${leaveColumn} - $1 WHERE user_id = $2`,
+      [decrement, user_id]
+    );
+
+    await db.query("COMMIT");
+
+    return res
+      .status(200)
+      .json({ message: "Leave accepted and balance updated" });
+
+  } catch (err) {
+    await db.query("ROLLBACK").catch(() => {});
+    console.error("❌ Leave action error:", err.message);
+    return res.status(500).json({ error: "Failed to process leave action" });
+  }
 });
 
-//Fetch Employees under a Manager
-app.post("/api/manager/employees", (req, res) => {
+
+// Fetch Employees under a Manager
+app.post("/api/manager/employees", async (req, res) => {
   const { username } = req.body;
 
   if (!username) {
     return res.status(400).json({ error: "Username is required" });
   }
 
-  // Step 1: Get manager ID
-  const getManagerIdQuery = `SELECT id FROM users WHERE username = ?`;
-  db.get(getManagerIdQuery, [username], (err, manager) => {
-    if (err || !manager) {
-      console.error("Manager lookup error:", err?.message);
+  try {
+    // Step 1: Get manager ID
+    const managerResult = await db.query(
+      `SELECT id FROM users WHERE username = $1`,
+      [username]
+    );
+
+    if (managerResult.rows.length === 0) {
       return res.status(404).json({ error: "Manager not found" });
     }
 
-    const managerId = manager.id;
+    const managerId = managerResult.rows[0].id;
 
     // Step 2: Get all employee_ids under this manager
-    const getEmployeeIdsQuery = `
-      SELECT employee_id FROM employee_manager WHERE manager_id = ?
-    `;
-    db.all(getEmployeeIdsQuery, [managerId], (err, rows) => {
-      if (err) {
-        console.error("Employee ID fetch error:", err.message);
-        return res.status(500).json({ error: "Error fetching employee list" });
-      }
+    const employeeIdsResult = await db.query(
+      `SELECT employee_id FROM employee_manager WHERE manager_id = $1`,
+      [managerId]
+    );
 
-      if (!rows.length) {
-        return res.status(200).json({ employees: [] }); // No direct reports
-      }
+    if (employeeIdsResult.rows.length === 0) {
+      return res.status(200).json({ employees: [] }); // No direct reports
+    }
 
-      const employeeIds = rows.map((r) => r.employee_id);
-      const placeholders = employeeIds.map(() => "?").join(",");
+    const employeeIds = employeeIdsResult.rows.map((r) => r.employee_id);
 
-      // Step 3: Get employee data from employee table
-      const getEmployeesQuery = `
-        SELECT * FROM employee WHERE user_id IN (${placeholders})
-      `;
+    // Step 3: Get employee data from employee table
+    // Generate placeholders dynamically for IN clause
+    const placeholders = employeeIds.map((_, i) => `$${i + 1}`).join(",");
+    const getEmployeesQuery = `SELECT * FROM employee WHERE user_id IN (${placeholders})`;
 
-      db.all(getEmployeesQuery, employeeIds, (err, employeeData) => {
-        if (err) {
-          console.error("Employee data fetch error:", err.message);
-          return res
-            .status(500)
-            .json({ error: "Error retrieving employee details" });
-        }
+    const employeesResult = await db.query(getEmployeesQuery, employeeIds);
 
-        res.status(200).json({ employees: employeeData });
-      });
-    });
-  });
+    res.status(200).json({ employees: employeesResult.rows });
+  } catch (err) {
+    console.error("❌ Fetch employees error:", err.message);
+    res.status(500).json({ error: "Error retrieving employee details" });
+  }
 });
 
+
 // Fetch Employee Data Using username
-app.post("/api/employee/details", (req, res) => {
+app.post("/api/employee/details", async (req, res) => {
   const { username } = req.body;
 
   if (!username) {
@@ -676,201 +670,159 @@ app.post("/api/employee/details", (req, res) => {
       .json({ error: "username is required in request body" });
   }
 
-  // Step 1: Check if user exists
-  db.get(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    (err, userRow) => {
-      if (err)
-        return res
-          .status(500)
-          .json({ error: "Database error", details: err.message });
-      if (!userRow) return res.status(404).json({ error: "User not found" });
+  try {
+    // Step 1: Check if user exists
+    const userResult = await db.query(
+      "SELECT * FROM users WHERE username = $1",
+      [username]
+    );
 
-      // Step 2: Get employee details for that user_id
-      db.get(
-        "SELECT * FROM employee WHERE user_id = ?",
-        [userRow.id],
-        (err, empRow) => {
-          if (err)
-            return res
-              .status(500)
-              .json({ error: "Database error", details: err.message });
-          if (!empRow)
-            return res
-              .status(404)
-              .json({ error: "Employee details not found" });
-
-          return res.json(empRow);
-        }
-      );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
     }
-  );
+
+    const userId = userResult.rows[0].id;
+
+    // Step 2: Get employee details for that user_id
+    const empResult = await db.query(
+      "SELECT * FROM employee WHERE user_id = $1",
+      [userId]
+    );
+
+    if (empResult.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Employee details not found" });
+    }
+
+    return res.json(empResult.rows[0]);
+  } catch (err) {
+    console.error("❌ Fetch employee details error:", err.message);
+    return res
+      .status(500)
+      .json({ error: "Database error", details: err.message });
+  }
 });
 
+
 // Update editable employee profile fields
-app.post("/api/employee/update-profile", (req, res) => {
-  const { username, email, address, dob, marital_status, blood_group } =
-    req.body;
+app.post("/api/employee/update-profile", async (req, res) => {
+  const { username, email, address, dob, marital_status, blood_group } = req.body;
 
   if (!username) return res.status(400).json({ error: "Username is required" });
 
-  db.get(
-    "SELECT * FROM users WHERE username = ?",
-    [username],
-    (err, userRow) => {
-      if (err || !userRow)
-        return res.status(404).json({ error: "User not found" });
+  try {
+    // Step 1: Get user_id
+    const userResult = await db.query("SELECT id FROM users WHERE username = $1", [username]);
+    if (userResult.rows.length === 0) return res.status(404).json({ error: "User not found" });
 
-      db.run(
-        `
-      UPDATE employee SET
-        email = ?,
-        address = ?,
-        dob = ?,
-        marital_status = ?,
-        blood_group = ?
-      WHERE user_id = ?
-    `,
-        [email, address, dob, marital_status, blood_group, userRow.id],
-        function (err) {
-          if (err)
-            return res
-              .status(500)
-              .json({ error: "Database update failed", details: err.message });
+    const userId = userResult.rows[0].id;
 
-          res.json({ success: true });
-        }
-      );
-    }
-  );
+    // Step 2: Update employee profile
+    const updateQuery = `
+      UPDATE employee
+      SET email = $1,
+          address = $2,
+          dob = $3,
+          marital_status = $4,
+          blood_group = $5
+      WHERE user_id = $6
+    `;
+    await db.query(updateQuery, [email, address, dob, marital_status, blood_group, userId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Update profile error:", err.message);
+    res.status(500).json({ error: "Database update failed", details: err.message });
+  }
 });
 
+
 app.get("/api/employee/home-summary", async (req, res) => {
-  const username = req.query.username;
+  const { username } = req.query;
   if (!username) return res.status(400).json({ error: "username is required" });
 
   try {
-    db.get(
-      "SELECT * FROM users WHERE username = ?",
-      [username],
-      (err, userRow) => {
-        if (err || !userRow)
-          return res
-            .status(500)
-            .json({ error: "User not found", details: err });
+    // Step 1: Get user_id
+    const userResult = await db.query("SELECT id FROM users WHERE username = $1", [username]);
+    if (userResult.rows.length === 0) return res.status(404).json({ error: "User not found" });
+    const userId = userResult.rows[0].id;
 
-        const userId = userRow.id;
+    // Step 2: Fetch employee details
+    const empResult = await db.query("SELECT * FROM employee WHERE user_id = $1", [userId]);
+    if (empResult.rows.length === 0) return res.status(404).json({ error: "Employee not found" });
+    const empRow = empResult.rows[0];
 
-        // Fetch employee details
-        db.get(
-          "SELECT * FROM employee WHERE user_id = ?",
-          [userId],
-          async (err, empRow) => {
-            if (err || !empRow)
-              return res
-                .status(500)
-                .json({ error: "Employee not found", details: err });
+    const today = new Date().toISOString().split("T")[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
-            const today = new Date().toISOString().split("T")[0];
-            const tomorrow = new Date(Date.now() + 86400000)
-              .toISOString()
-              .split("T")[0];
+    // Step 3: Parallel queries
+    const [
+      leavesTodayRows,
+      leavesTomorrowRows,
+      birthdayRows,
+      holidayRows,
+      notificationRows,
+      jobRows,
+      leaveMaster
+    ] = await Promise.all([
+      db.query(
+        `SELECT fullname, department FROM employee 
+         JOIN leave_requests ON employee.user_id = leave_requests.user_id
+         WHERE leave_requests.from_date <= $1 AND leave_requests.to_date >= $2
+           AND leave_requests.status = 'Accepted' AND leave_requests.leave_wfh = 'Leave'`,
+        [today, today]
+      ),
+      db.query(
+        `SELECT fullname, department FROM employee 
+         JOIN leave_requests ON employee.user_id = leave_requests.user_id
+         WHERE from_date <= $1 AND to_date >= $2 AND status = 'Accepted' AND leave_wfh = 'Leave'`,
+        [tomorrow, tomorrow]
+      ),
+      db.query(
+        `SELECT fullname, department FROM employee
+         WHERE TO_CHAR(dob, 'MM-DD') = TO_CHAR(CURRENT_DATE, 'MM-DD')`
+      ),
+      db.query(
+        `SELECT occasion, date FROM holidays WHERE date >= CURRENT_DATE ORDER BY date ASC LIMIT 3`
+      ),
+      db.query(
+        `SELECT type, message, created_at FROM hr_notifications ORDER BY created_at DESC LIMIT 5`
+      ),
+      db.query(
+        `SELECT title, department FROM job_postings WHERE status = 'Active' ORDER BY created_at DESC LIMIT 5`
+      ),
+      db.query(
+        `SELECT pending_casual_leaves, pending_sick_leaves, pending_earned_leaves
+         FROM leave_master WHERE user_id = $1`,
+        [userId]
+      )
+    ]);
 
-            // Parallel Queries
-            const queries = {
-              // Who's on leave
-              leavesToday: `SELECT fullname, department FROM employee 
-                          JOIN leave_requests ON employee.user_id = leave_requests.user_id
-                          WHERE leave_requests.from_date <= ? AND leave_requests.to_date >= ? AND leave_requests.status = 'Accepted' AND leave_requests.leave_wfh = 'Leave'`,
-              leavesTomorrow: `SELECT fullname, department FROM employee 
-                          JOIN leave_requests ON employee.user_id = leave_requests.user_id
-                          WHERE from_date <= ? AND to_date >= ? AND status = 'Accepted' AND leave_wfh = 'Leave'`,
+    res.json({
+      fullname: empRow.fullname,
+      position: empRow.position,
+      reporting_manager: empRow.reporting_manager,
+      joining_date: empRow.joining_date,
+      email: empRow.email,
 
-              // Birthdays today or this week
-              birthdays: `SELECT fullname, department FROM employee 
-                      WHERE strftime('%m-%d', dob) = strftime('%m-%d', DATE('now')) 
-                      `,
+      remaining_cl: leaveMaster.rows[0]?.pending_casual_leaves || 0,
+      remaining_sl: leaveMaster.rows[0]?.pending_sick_leaves || 0,
+      remaining_el: leaveMaster.rows[0]?.pending_earned_leaves || 0,
 
-              // Upcoming holidays
-              holidays: `SELECT occasion, date FROM holidays 
-                     WHERE date >= DATE('now') ORDER BY date ASC LIMIT 3`,
-
-              // Notifications
-              notifications: `SELECT type, message, created_at FROM hr_notifications 
-                          ORDER BY created_at DESC LIMIT 5`,
-
-              // Internal job postings
-              jobs: `SELECT title, department FROM job_postings 
-                 WHERE status = 'Active' ORDER BY created_at DESC LIMIT 5`,
-
-              // Get pending leaves
-              pending_leaves: `SELECT pending_casual_leaves, pending_sick_leaves, pending_earned_leaves FROM leave_master 
-                 WHERE user_id = ?`,
-            };
-
-            // Run all parallel
-            db.all(
-              queries.leavesToday,
-              [today, today],
-              (err, todayLeaveRows) => {
-                db.all(
-                  queries.leavesTomorrow,
-                  [tomorrow, tomorrow],
-                  (err, tomorrowLeaveRows) => {
-                    db.all(queries.birthdays, [], (err, birthdayRows) => {
-                      db.all(queries.holidays, [], (err, holidayRows) => {
-                        db.all(
-                          queries.notifications,
-                          [],
-                          (err, notificationRows) => {
-                            db.all(queries.jobs, [], (err, jobRows) => {
-                              db.get(
-                                queries.pending_leaves,
-                                [userId],
-                                (err, leaveRow) => {
-                                  return res.json({
-                                    fullname: empRow.fullname,
-                                    position: empRow.position,
-                                    reporting_manager: empRow.reporting_manager,
-                                    joining_date: empRow.joining_date,
-                                    email: empRow.email,
-
-                                    remaining_cl:
-                                      leaveRow?.pending_casual_leaves || 0,
-                                    remaining_sl:
-                                      leaveRow?.pending_sick_leaves || 0,
-                                    remaining_el:
-                                      leaveRow?.pending_earned_leaves || 0,
-
-                                    leave_today: todayLeaveRows || [],
-                                    leave_tomorrow: tomorrowLeaveRows || [],
-                                    birthdays: birthdayRows || [],
-                                    holidays: holidayRows || [],
-                                    notifications: notificationRows || [],
-                                    jobs: jobRows || [],
-                                  });
-                                }
-                              );
-                            });
-                          }
-                        );
-                      });
-                    });
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    );
+      leave_today: leavesTodayRows.rows,
+      leave_tomorrow: leavesTomorrowRows.rows,
+      birthdays: birthdayRows.rows,
+      holidays: holidayRows.rows,
+      notifications: notificationRows.rows,
+      jobs: jobRows.rows,
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ error: "Server error", details: err.message });
+    console.error("❌ Fetch home summary error:", err.message);
+    res.status(500).json({ error: "Server error", details: err.message });
   }
 });
+
 
 // GET: Fetch all employees for a given org_id
 app.get("/api/fetch_employees", async (req, res) => {
@@ -881,16 +833,17 @@ app.get("/api/fetch_employees", async (req, res) => {
   }
 
   try {
-    const rows = await db.query("SELECT * FROM employee WHERE org_id = $1", [
+    const result = await db.query("SELECT * FROM employee WHERE org_id = $1", [
       org_id,
     ]);
 
-    res.json({ data: rows });
+    res.json({ data: result.rows });
   } catch (err) {
-    console.error("Error fetching employees:", err);
+    console.error("Error fetching employees:", err.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 // PUT: Update employee by user_id
 app.put("/api/employees/update", async (req, res) => {
@@ -925,26 +878,27 @@ app.put("/api/employees/update", async (req, res) => {
     const updateQuery = `
       UPDATE employee
       SET
-        org_id = ?,
-        fullname = ?,
-        gender = ?,
-        dob = ?,
-        email = ?,
-        mobile = ?,
-        joining_date = ?,
-        emp_code = ?,
-        department = ?,
-        position = ?,
-        address = ?,
-        blood_group = ?,
-        marital_status = ?,
-        reporting_manager = ?,
-        cityfrom = ?,
-        profile_photo = ?,
-        about = ?,
-        hobbies = ?,
-        linkedin = ?
-      WHERE user_id = ?
+        org_id = $1,
+        fullname = $2,
+        gender = $3,
+        dob = $4,
+        email = $5,
+        mobile = $6,
+        joining_date = $7,
+        emp_code = $8,
+        department = $9,
+        position = $10,
+        address = $11,
+        blood_group = $12,
+        marital_status = $13,
+        reporting_manager = $14,
+        cityfrom = $15,
+        profile_photo = $16,
+        about = $17,
+        hobbies = $18,
+        linkedin = $19
+      WHERE user_id = $20
+      RETURNING *;
     `;
 
     const values = [
@@ -970,9 +924,9 @@ app.put("/api/employees/update", async (req, res) => {
       user_id,
     ];
 
-    const result = await dbRunAsync(updateQuery, values);
+    const result = await db.query(updateQuery, values);
 
-    if (result.changes === 0) {
+    if (result.rowCount === 0) {
       return res
         .status(404)
         .json({ error: "Employee not found or no changes made" });
@@ -980,15 +934,16 @@ app.put("/api/employees/update", async (req, res) => {
 
     res.json({ success: true, message: "Employee updated successfully" });
   } catch (err) {
-    console.error("Error updating employee:", err);
+    console.error("Error updating employee:", err.message);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
+
 // POST: Add new employee with user account
 app.post("/api/add_employee", async (req, res) => {
   const {
-    org_id,
+    org_id, 
     fullname,
     user_type,
     username,

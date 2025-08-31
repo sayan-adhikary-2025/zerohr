@@ -130,7 +130,7 @@
           const org_id = userData?.user?.org_id;
 
           const res = await fetch(
-            `http://localhost:3000/api/fetch_employees?org_id=${org_id}`
+            `http://13.201.134.228:3000/api/fetch_employees?org_id=${org_id}`
           );
           const data = await res.json();
 
@@ -201,7 +201,7 @@
           };
 
           try {
-            const res = await fetch("http://localhost:3000/api/add_employee", {
+            const res = await fetch("http://13.201.134.228:3000/api/add_employee", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(newEmployee),
