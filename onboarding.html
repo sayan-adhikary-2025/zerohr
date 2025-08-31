@@ -89,6 +89,18 @@
             class="w-full mb-3 px-4 py-2 border rounded"
             required
           />
+          <input
+            type="text"
+            placeholder="Username"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Password"
+            class="w-full mb-3 px-4 py-2 border rounded"
+            required
+          />
           <div class="flex justify-end gap-2">
             <button
               type="button"
@@ -144,6 +156,10 @@
       <td class="border px-4 py-2">${emp.fullname || "N/A"}</td>
       <td class="border px-4 py-2">${emp.department || "N/A"}</td>
       <td class="border px-4 py-2">${emp.position || "N/A"}</td>
+      <td class="border px-4 py-2">${emp.username || "N/A"}</td>
+      <td class="border px-4 py-2">${emp.password || "N/A"}</td>
+
+
       <td class="border px-4 py-2">
   <button
   onclick='editEmployee(${JSON.stringify(emp)})'
@@ -165,7 +181,7 @@
         .getElementById("addEmployeeForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
-          const [name, empCode, dept, role] = Array.from(e.target.elements).map(
+          const [name, empCode, dept, role, uname, pass] = Array.from(e.target.elements).map(
             (input) => input.value
           );
           const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
@@ -179,8 +195,8 @@
             emp_code: empCode,
             position: role,
             department: dept,
-            username: empCode + "@zerohr.in",
-            password: "password123", // You can make this dynamic later
+            username: uname,
+            password: pass,
             user_type: 2,
           };
 
