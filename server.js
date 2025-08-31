@@ -35,7 +35,7 @@ const db = new Pool({
   password: process.env.DB_PASS || "yourpassword",
   database: process.env.DB_NAME || "leaveapp",
   port: process.env.DB_PORT || 5432,
-  ssl: process.env.DB_SSL === "true", // use SSL in prod if needed
+   ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false, // use SSL in prod if needed
 });
 
 db.connect()

@@ -366,7 +366,7 @@
         about_us: jobForm.aboutUs.value,
       };
 
-      const res = await fetch("http://13.201.134.228:3000/api/job-postings", {
+      const res = await fetch("http://13.233.156.70:3000/api/job-postings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(job),
@@ -387,7 +387,7 @@
 
     async function renderJobs() {
       jobListBody.innerHTML = "";
-      const res = await fetch(`http://13.201.134.228:3000/api/job-postings/user/${encodeURIComponent(username)}`);
+      const res = await fetch(`http://13.233.156.70:3000/api/job-postings/user/${encodeURIComponent(username)}`);
       const jobs = await res.json();
       window.currentJobs = jobs;
 
@@ -526,7 +526,7 @@
     renderJobs();
 
     async function renderApplications() {
-      const res = await fetch(`http://13.201.134.228:3000/api/applications/org/${org_id}`);
+      const res = await fetch(`http://13.233.156.70:3000/api/applications/org/${org_id}`);
       const applications = await res.json();
       const tbody = document.getElementById("applicationsTableBody");
       tbody.innerHTML = "";
@@ -549,7 +549,7 @@
         <td>
           <div class="action-buttons">
             <button class="action-btn view-btn" onclick="viewApplication(${app.id})">🔍 View</button>
-            <a class="action-btn download-btn" href="http://13.201.134.228:3000${app.resume_link}" target="_blank">⬇️ Resume</a>
+            <a class="action-btn download-btn" href="http://13.233.156.70:3000${app.resume_link}" target="_blank">⬇️ Resume</a>
           </div>
         </td>
 
@@ -559,7 +559,7 @@
     }
 
     async function updateApplicationStatus(id, status) {
-      await fetch(`http://13.201.134.228:3000/api/applications/${id}/status`, {
+      await fetch(`http://13.233.156.70:3000/api/applications/${id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -567,7 +567,7 @@
     }
 
     async function viewApplication(id) {
-      const res = await fetch(`http://13.201.134.228:3000/api/applications/${id}`);
+      const res = await fetch(`http://13.233.156.70:3000/api/applications/${id}`);
       const app = await res.json();
       const html = `
     <h3>${app.full_name}</h3>
