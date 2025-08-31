@@ -2,9 +2,11 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
-const sqlite3 = require("sqlite3").verbose();
+require("dotenv").config(); // load .env file
+const { Pool } = require("pg");
+
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Serve static uploads
 app.use("/uploads", express.static("uploads"));
@@ -13,9 +15,7 @@ app.use("/uploads", express.static("uploads"));
 app.use(cors());
 app.use(express.json());
 
-// Saving Resume Files vvvvvv
-
-// ✅ Multer config should come BEFORE any route using `upload`
+// ==================== FILE UPLOAD CONFIG ====================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -27,34 +27,32 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Connect to SQLite
-const db = new sqlite3.Database(
-  "C:/Users/mi pc/Downloads/sqlite/leaveapp.db",
-  (err) => {
-    if (err) {
-      console.error("❌ Error connecting to SQLite:", err.message);
-    } else {
-      console.log("✅ Connected to SQLite database");
-    }
-  }
-);
-//Risky
-const { promisify } = require("util");
-const dbAllAsync = promisify(db.all).bind(db);
-const dbRunAsync = promisify(db.all).bind(db);
+// ==================== DATABASE CONNECTION (Postgres only) ====================
 
-// --------- PROMISE WRAPPER FOR db.get ---------
-function dbGetAsync(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-}
+const db = new Pool({
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASS || "yourpassword",
+  database: process.env.DB_NAME || "leaveapp",
+  port: process.env.DB_PORT || 5432,
+  ssl: process.env.DB_SSL === "true", // use SSL in prod if needed
+});
+
+db.connect()
+  .then(() => console.log("✅ Connected to Postgres"))
+  .catch((err) => console.error("❌ Postgres connection error:", err.stack));
+
+// ==================== APP START ====================
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
+
+module.exports = db;
+
+
 
 // LOGIN API
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -63,21 +61,22 @@ app.post("/api/login", (req, res) => {
       .json({ status: 0, error: "Username and password are required" });
   }
 
-  const loginQuery = `SELECT id, username, fullname, org_id, user_type FROM users WHERE username = ? AND password = ?`;
+  try {
+    const loginQuery = `
+      SELECT id, username, fullname, org_id, user_type
+      FROM users
+      WHERE username = $1 AND password = $2
+    `;
 
-  db.get(loginQuery, [username, password], (err, user) => {
-    if (err) {
-      console.error("❌ Database error during login:", err.message);
-      return res
-        .status(500)
-        .json({ status: 0, error: "Internal server error" });
-    }
+    const result = await db.query(loginQuery, [username, password]);
 
-    if (!user) {
+    if (result.rows.length === 0) {
       return res
         .status(401)
         .json({ status: 0, message: "Invalid username or password" });
     }
+
+    const user = result.rows[0];
 
     return res.json({
       status: 1,
@@ -89,11 +88,14 @@ app.post("/api/login", (req, res) => {
         user_type: user.user_type,
       },
     });
-  });
+  } catch (err) {
+    console.error("❌ Database error during login:", err.message);
+    return res.status(500).json({ status: 0, error: "Internal server error" });
+  }
 });
 
 // POST: Create a new job posting
-app.post("/api/job-postings", (req, res) => {
+app.post("/api/job-postings", async (req, res) => {
   const {
     username,
     title,
@@ -116,27 +118,29 @@ app.post("/api/job-postings", (req, res) => {
     return res.status(400).json({ status: 0, error: "Username is required" });
   }
 
-  const getOrgQuery = `SELECT org_id FROM users WHERE username = ?`;
-  db.get(getOrgQuery, [username], (err, user) => {
-    if (err) {
-      console.error("❌ Error fetching org_id:", err.message);
-      return res.status(500).json({ status: 0, error: "Database error" });
-    }
+  try {
+    // 1. Get org_id for the user
+    const getOrgQuery = `SELECT org_id FROM users WHERE username = $1`;
+    const orgResult = await db.query(getOrgQuery, [username]);
 
-    if (!user) {
+    if (orgResult.rows.length === 0) {
       return res.status(404).json({ status: 0, error: "User not found" });
     }
 
+    const org_id = orgResult.rows[0].org_id;
+
+    // 2. Insert new job posting
     const insertQuery = `
       INSERT INTO job_postings (
         org_id, title, location, department, work_type, job_mode,
         salary_min, salary_max, job_summary, about_team, reporting_to,
         responsibilities, skills, education_experience, about_us
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id
     `;
 
     const values = [
-      user.org_id,
+      org_id,
       title,
       location,
       department,
@@ -153,49 +157,50 @@ app.post("/api/job-postings", (req, res) => {
       about_us,
     ];
 
-    db.run(insertQuery, values, function (err) {
-      if (err) {
-        console.error("❌ Insert error:", err.message);
-        return res.status(500).json({ status: 0, error: "Insert failed" });
-      }
+    const result = await db.query(insertQuery, values);
 
-      return res.status(201).json({
-        status: 1,
-        job_id: this.lastID,
-        message: "Job created successfully",
-      });
+    return res.status(201).json({
+      status: 1,
+      job_id: result.rows[0].id,
+      message: "Job created successfully",
     });
-  });
+  } catch (err) {
+    console.error("❌ Insert error:", err.message);
+    return res.status(500).json({ status: 0, error: "Insert failed" });
+  }
 });
 
+
 // GET: Job listings for user’s org
-app.get("/api/job-postings/user/:username", (req, res) => {
+app.get("/api/job-postings/user/:username", async (req, res) => {
   const { username } = req.params;
 
-  const getOrgQuery = `SELECT org_id FROM users WHERE username = ?`;
-  db.get(getOrgQuery, [username], (err, user) => {
-    if (err) {
-      console.error("❌ Error fetching org_id:", err.message);
-      return res.status(500).json({ status: 0, error: "Database error" });
-    }
+  try {
+    // 1. Get org_id for this user
+    const orgResult = await db.query(
+      "SELECT org_id FROM users WHERE username = $1",
+      [username]
+    );
 
-    if (!user) {
+    if (orgResult.rows.length === 0) {
       return res.status(404).json({ status: 0, error: "User not found" });
     }
 
-    const jobQuery = `SELECT * FROM job_postings WHERE org_id = ? ORDER BY created_at DESC`;
-    db.all(jobQuery, [user.org_id], (err, rows) => {
-      if (err) {
-        console.error("❌ Error fetching jobs:", err.message);
-        return res
-          .status(500)
-          .json({ status: 0, error: "Error retrieving jobs" });
-      }
+    const orgId = orgResult.rows[0].org_id;
 
-      res.json(rows);
-    });
-  });
+    // 2. Get jobs for that org
+    const jobResult = await db.query(
+      "SELECT * FROM job_postings WHERE org_id = $1 ORDER BY created_at DESC",
+      [orgId]
+    );
+
+    res.json(jobResult.rows);
+  } catch (err) {
+    console.error("❌ Error fetching jobs:", err.message);
+    res.status(500).json({ status: 0, error: "Database error" });
+  }
 });
+
 
 // GET: Fetch single job by ID (for job-view.html)
 app.get("/api/job-postings/:id", async (req, res) => {
@@ -203,7 +208,7 @@ app.get("/api/job-postings/:id", async (req, res) => {
   console.log("Requested jobId:", jobId);
 
   try {
-    const result = await dbGetAsync("SELECT * FROM job_postings WHERE id = ?", [
+    const result = await db.query("SELECT * FROM job_postings WHERE id = $1", [
       jobId,
     ]);
     console.log("Query result:", result);
@@ -220,7 +225,7 @@ app.get("/api/job-postings/:id", async (req, res) => {
 });
 
 // Submit job application
-app.post("/api/apply", upload.single("resume"), (req, res) => {
+app.post("/api/apply", upload.single("resume"), async (req, res) => {
   const {
     job_id,
     full_name,
@@ -240,103 +245,103 @@ app.post("/api/apply", upload.single("resume"), (req, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // Step 1: Get org_id from the job_postings table
-  db.get(
-    "SELECT org_id FROM job_postings WHERE id = ?",
-    [job_id],
-    (err, job) => {
-      if (err || !job) {
-        console.error("❌ Error fetching job/org_id:", err?.message);
-        return res.status(500).json({ error: "Failed to get job details" });
-      }
+  try {
+    // Step 1: Get org_id from job_postings
+    const jobResult = await db.query(
+      "SELECT org_id FROM job_postings WHERE id = $1",
+      [job_id]
+    );
 
-      // Step 2: Insert application
-      const insertQuery = `
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({ error: "Job not found" });
+    }
+
+    const org_id = jobResult.rows[0].org_id;
+
+    // Step 2: Insert into job_applications
+    const insertQuery = `
       INSERT INTO job_applications (
         job_id, org_id, full_name, email, phone, current_location,
         current_company, linkedin, portfolio, cover_letter,
         additional_info, resume_link
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id
     `;
 
-      const values = [
-        job_id,
-        job.org_id,
-        full_name,
-        email,
-        phone,
-        current_location,
-        current_company,
-        linkedin,
-        portfolio,
-        cover_letter,
-        additional_info,
-        resume_link,
-      ];
+    const values = [
+      job_id,
+      org_id,
+      full_name,
+      email,
+      phone,
+      current_location,
+      current_company,
+      linkedin,
+      portfolio,
+      cover_letter,
+      additional_info,
+      resume_link,
+    ];
 
-      db.run(insertQuery, values, function (err) {
-        if (err) {
-          console.error("❌ Application insert error:", err.message);
-          return res
-            .status(500)
-            .json({ error: "Failed to submit application" });
-        }
+    await db.query(insertQuery, values);
 
-        // ✅ Step 3: Increment applications count
-        db.run(
-          "UPDATE job_postings SET applications = applications + 1 WHERE id = ?",
-          [job_id],
-          function (updateErr) {
-            if (updateErr) {
-              console.error(
-                "⚠️ Warning: Application saved, but failed to update count:",
-                updateErr.message
-              );
-              return res
-                .status(201)
-                .json({ warning: "Applied but counter not updated" });
-            }
+    // Step 3: Increment applications count
+    await db.query(
+      "UPDATE job_postings SET applications = applications + 1 WHERE id = $1",
+      [job_id]
+    );
 
-            return res
-              .status(201)
-              .json({ message: "Application submitted successfully" });
-          }
-        );
-      });
-    }
-  );
+    return res.status(201).json({ message: "Application submitted successfully" });
+  } catch (err) {
+    console.error("❌ Application insert error:", err.message);
+    return res.status(500).json({ error: "Failed to submit application" });
+  }
 });
 
+
 // Get All Applications for Org
-app.get("/api/applications/org/:org_id", (req, res) => {
+app.get("/api/applications/org/:org_id", async (req, res) => {
   const { org_id } = req.params;
 
   const query = `
     SELECT a.*, j.title, j.department
     FROM job_applications a
     JOIN job_postings j ON a.job_id = j.id
-    WHERE a.org_id = ?
+    WHERE a.org_id = $1
     ORDER BY a.created_at DESC
   `;
 
-  db.all(query, [org_id], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: "Error loading applications" });
-    }
-    res.json(rows);
-  });
+  try {
+    const result = await db.query(query, [org_id]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Error loading applications:", err.message);
+    res.status(500).json({ error: "Error loading applications" });
+  }
 });
 
 // Get Single Application by ID
+app.get("/api/applications/:id", async (req, res) => {
+  const { id } = req.params;
 
-app.get("/api/applications/:id", (req, res) => {
-  const id = req.params.id;
-  db.get("SELECT * FROM job_applications WHERE id = ?", [id], (err, row) => {
-    if (err || !row) return res.status(404).json({ error: "Not found" });
-    res.json(row);
-  });
+  try {
+    const result = await db.query(
+      "SELECT * FROM job_applications WHERE id = $1",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Not found" });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("❌ Error fetching application:", err.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
+// NEED TO SHIFT TO POSTGRES
 // Update Application Status
 app.put("/api/applications/:id/status", (req, res) => {
   const id = req.params.id;
@@ -777,7 +782,7 @@ app.get("/api/employee/home-summary", async (req, res) => {
               // Who's on leave
               leavesToday: `SELECT fullname, department FROM employee 
                           JOIN leave_requests ON employee.user_id = leave_requests.user_id
-                          WHERE from_date <= ? AND to_date >= ? AND status = 'Accepted' AND leave_wfh = 'Leave'`,
+                          WHERE leave_requests.from_date <= ? AND leave_requests.to_date >= ? AND leave_requests.status = 'Accepted' AND leave_requests.leave_wfh = 'Leave'`,
               leavesTomorrow: `SELECT fullname, department FROM employee 
                           JOIN leave_requests ON employee.user_id = leave_requests.user_id
                           WHERE from_date <= ? AND to_date >= ? AND status = 'Accepted' AND leave_wfh = 'Leave'`,
@@ -876,7 +881,7 @@ app.get("/api/fetch_employees", async (req, res) => {
   }
 
   try {
-    const rows = await dbAllAsync("SELECT * FROM employee WHERE org_id = ?", [
+    const rows = await db.query("SELECT * FROM employee WHERE org_id = $1", [
       org_id,
     ]);
 
@@ -1007,9 +1012,8 @@ app.post("/api/add_employee", async (req, res) => {
     // 2. Insert into employee table
     const employeeInsert = await dbRunAsync(
       `INSERT INTO employee (
-        org_id, user_id, fullname, emp_code, position, department,
-        gender, dob, email, mobile, joining_date
-      ) VALUES (?, ?, ?, ?, ?, ?, '', '', '', '', '')`,
+        org_id, user_id, fullname, emp_code, position, department
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
       [org_id, user_id, fullname, emp_code, position, department]
     );
 
@@ -1022,9 +1026,4 @@ app.post("/api/add_employee", async (req, res) => {
     console.error("Error adding employee:", err);
     res.status(500).json({ error: "Failed to add employee" });
   }
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
