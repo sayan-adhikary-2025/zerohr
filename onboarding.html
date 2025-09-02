@@ -9,18 +9,26 @@
   </head>
   <body class="bg-gray-50 text-gray-800 font-sans">
     <header
-      class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow"
-    >
-      <h1 class="text-xl font-semibold">Employee Onboarding</h1>
-      <button
-  onclick="openAddModal()"
-  class="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+  class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow"
 >
-  <i data-lucide="user-plus" class="w-5 h-5"></i>
-  <span class="text-sm font-medium">Add Employee</span>
-</button>
+  <h1 class="text-xl font-semibold">Employee Onboarding</h1>
+  <div class="flex items-center space-x-4">
+    <button
+      onclick="openAddModal()"
+      class="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+    >
+      <i data-lucide="user-plus" class="w-5 h-5"></i>
+      <span class="text-sm font-medium">Add Employee</span>
+    </button>
+    <button
+      onclick="window.location.href='dashboard.html'"
+      class="text-sm bg-gray-600 px-4 py-2 rounded hover:bg-blue-600"
+    >
+      ← Back to Dashboard
+    </button>
+  </div>
+</header>
 
-    </header>
 
     <main class="p-6 max-w-6xl mx-auto">
       <div class="mb-4">
@@ -32,8 +40,8 @@
           class="border border-gray-300 rounded px-4 py-2 w-full md:w-1/3"
         >
           <option value="">All Departments</option>
-          <option>Engineering</option>
-          <option>Marketing</option>
+          <option>Tech</option>
+          <option>Product</option>
           <option>HR</option>
           <option>Sales</option>
         </select>
@@ -121,129 +129,174 @@
     </div>
 
     <script>
-      let allEmployees = [];
+  let allEmployees = [];
+  let filteredEmployees = [];
+  let currentSort = { key: null, asc: true };
 
-      // Fetch employee data from backend API and store in localStorage
-      async function fetchEmployeesFromAPI() {
-        try {
-          const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
-          const org_id = userData?.user?.org_id;
+  // Fetch employee data from backend API and store in localStorage
+  async function fetchEmployeesFromAPI() {
+    try {
+      const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+      const org_id = userData?.user?.org_id;
 
-          const res = await fetch(
-            `http://13.233.156.70:3000/api/fetch_employees?org_id=${org_id}`
-          );
-          const data = await res.json();
+      const res = await fetch(
+        `http://localhost:3000/api/fetch_employees?org_id=${org_id}`
+      );
+      const data = await res.json();
 
-          if (data && data.data) {
-            allEmployees = data.data;
-            localStorage.setItem("employeeData", JSON.stringify(allEmployees));
-            renderEmployees();
-          }
-        } catch (err) {
-          console.error("Failed to fetch employees:", err);
-        }
+      if (data && data.data) {
+        allEmployees = data.data;
+        localStorage.setItem("employeeData", JSON.stringify(allEmployees));
+        applyFiltersAndRender();
       }
+    } catch (err) {
+      console.error("Failed to fetch employees:", err);
+    }
+  }
 
-      // Render employee rows in the table
-      function renderEmployees() {
-  const tbody = document.getElementById("employeeTableBody");
-  tbody.innerHTML = "";
+  // Apply department filter
+  function applyFiltersAndRender() {
+    const deptFilter = document.getElementById("departmentFilter").value;
+    filteredEmployees = deptFilter
+      ? allEmployees.filter((emp) => emp.department === deptFilter)
+      : [...allEmployees];
 
-  allEmployees.forEach((emp) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="border px-4 py-2">${emp.emp_code || "N/A"}</td>
-      <td class="border px-4 py-2">${emp.fullname || "N/A"}</td>
-      <td class="border px-4 py-2">${emp.department || "N/A"}</td>
-      <td class="border px-4 py-2">${emp.position || "N/A"}</td>
-      <td class="border px-4 py-2">${emp.username || "N/A"}</td>
-      <td class="border px-4 py-2">${emp.password || "N/A"}</td>
+    applySorting();
+  }
 
+  // Apply sorting
+  function applySorting() {
+    if (currentSort.key) {
+      filteredEmployees.sort((a, b) => {
+        const valA = (a[currentSort.key] || "").toString().toLowerCase();
+        const valB = (b[currentSort.key] || "").toString().toLowerCase();
+        if (valA < valB) return currentSort.asc ? -1 : 1;
+        if (valA > valB) return currentSort.asc ? 1 : -1;
+        return 0;
+      });
+    }
+    renderEmployees();
+  }
 
-      <td class="border px-4 py-2">
-  <button
-  onclick='editEmployee(${JSON.stringify(emp)})'
-  class="flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
->
-  <i data-lucide="pencil" class="w-4 h-4"></i>
-  <span>Edit</span>
-</button>
-</td>
-    `;
-    tbody.appendChild(tr);
+  // Render employee rows in the table
+  function renderEmployees() {
+    const tbody = document.getElementById("employeeTableBody");
+    tbody.innerHTML = "";
+
+    filteredEmployees.forEach((emp) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="border px-4 py-2">${emp.emp_code || "N/A"}</td>
+        <td class="border px-4 py-2">${emp.fullname || "N/A"}</td>
+        <td class="border px-4 py-2">${emp.department || "N/A"}</td>
+        <td class="border px-4 py-2">${emp.position || "N/A"}</td>
+        <td class="border px-4 py-2">
+          <button
+            onclick='editEmployee(${JSON.stringify(emp)})'
+            class="flex items-center gap-1 px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+          >
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+            <span>Edit</span>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
     lucide.createIcons();
-  });
-}
+  }
 
+  // Handle Add Employee form submission
+  document
+    .getElementById("addEmployeeForm")
+    .addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const [name, empCode, dept, role, uname, pass] = Array.from(
+        e.target.elements
+      ).map((input) => input.value);
+      const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
+      const org_id = userData?.user?.org_id;
 
-      // Handle Add Employee form submission
-      document
-        .getElementById("addEmployeeForm")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const [name, empCode, dept, role, uname, pass] = Array.from(e.target.elements).map(
-            (input) => input.value
-          );
-          const userData = JSON.parse(localStorage.getItem("ZeroUserData"));
-          const org_id = userData?.user?.org_id;
+      if (!org_id) return alert("Org ID missing from localStorage");
 
-          if (!org_id) return alert("Org ID missing from localStorage");
+      const newEmployee = {
+        org_id,
+        fullname: name,
+        emp_code: empCode,
+        position: role,
+        department: dept,
+        username: uname,
+        password: pass,
+        user_type: 2,
+      };
 
-          const newEmployee = {
-            org_id,
-            fullname: name,
-            emp_code: empCode,
-            position: role,
-            department: dept,
-            username: uname,
-            password: pass,
-            user_type: 2,
-          };
-
-          try {
-            const res = await fetch("http://13.233.156.70:3000/api/add_employee", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(newEmployee),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-              await fetchEmployeesFromAPI(); // Refresh list
-              closeAddModal();
-            } else {
-              alert(data.error || "Error adding employee");
-            }
-          } catch (err) {
-            console.error("Add Employee Error:", err);
-            alert("Failed to add employee.");
-          }
+      try {
+        const res = await fetch("http://localhost:3000/api/add_employee", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newEmployee),
         });
 
-      // Modal open/close logic (if you're using a modal)
-      function closeAddModal() {
-        document.getElementById("addEmployeeModal").classList.add("hidden");
-        document.getElementById("addEmployeeForm").reset();
+        const data = await res.json();
+
+        if (res.ok) {
+          await fetchEmployeesFromAPI(); // Refresh list
+          closeAddModal();
+        } else {
+          alert(data.error || "Error adding employee");
+        }
+      } catch (err) {
+        console.error("Add Employee Error:", err);
+        alert("Failed to add employee.");
       }
+    });
 
-      function openAddModal() {
-        document.getElementById("addEmployeeModal").classList.remove("hidden");
+  // Modal open/close logic
+  function closeAddModal() {
+    document.getElementById("addEmployeeModal").classList.add("hidden");
+    document.getElementById("addEmployeeForm").reset();
+  }
+
+  function openAddModal() {
+    document.getElementById("addEmployeeModal").classList.remove("hidden");
+  }
+
+  // Edit employee redirect
+  function editEmployee(employee) {
+    localStorage.setItem("SelectedEmployee", JSON.stringify(employee));
+    window.location.href = "view_employee.html";
+  }
+
+  // Sorting by clicking table headers
+  function setupSorting() {
+    const headers = document.querySelectorAll("thead th");
+    const keys = ["emp_code", "fullname", "department", "position"];
+    headers.forEach((th, idx) => {
+      if (keys[idx]) {
+        th.classList.add("cursor-pointer");
+        th.addEventListener("click", () => {
+          if (currentSort.key === keys[idx]) {
+            currentSort.asc = !currentSort.asc;
+          } else {
+            currentSort.key = keys[idx];
+            currentSort.asc = true;
+          }
+          applySorting();
+        });
       }
+    });
+  }
 
-      // Initialize on load
-      window.addEventListener("DOMContentLoaded", fetchEmployeesFromAPI);
+  // Init
+  window.addEventListener("DOMContentLoaded", () => {
+    fetchEmployeesFromAPI();
+    document
+      .getElementById("departmentFilter")
+      .addEventListener("change", applyFiltersAndRender);
+    setupSorting();
+  });
 
+  lucide.createIcons();
+</script>
 
-function editEmployee(employee) {
-  localStorage.setItem("SelectedEmployee", JSON.stringify(employee));
-  window.location.href = "view_employee.html";
-}
-
-
-
-      lucide.createIcons();
-
-    </script>
   </body>
 </html>

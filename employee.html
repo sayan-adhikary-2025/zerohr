@@ -644,7 +644,7 @@
       <div class="dashboard-container">
         <!-- Profile Summary -->
         <div class="profile-card">
-          <img src="https://cdn-icons-png.flaticon.com/512/4140/4140047.png" alt="Profile" class="profile-photo">
+          <img src="https://cdn-icons-png.flaticon.com/512/4140/4140061.png" alt="Profile" class="profile-photo">
           <div class="profile-info">
             <span id="homeName"></span>
             <span id="homePosition"></span>
@@ -763,7 +763,7 @@
           <h3 id="popupTitle">Apply for Leave</h3>
           <form id="applyForm">
             <div id="leaveFields">
-              <label>Leave Type</label>
+              <label>Leave Types</label>
               <select id="leave_type" required>
                 <option value="">Select</option>
                 <option>Sick Leave</option>
@@ -883,7 +883,7 @@
         e.preventDefault();
 
         const isWFH = document.getElementById("applyForm").dataset.type === "wfh";
-        const url = "http://13.233.156.70:3000/api/employee/apply";
+        const url = "http://localhost:3000/api/employee/apply";
 
         const payload = {
           username: userData.user.username,
@@ -942,7 +942,7 @@
           return;
         }
 
-        const res = await fetch(`http://13.233.156.70:3000/api/employee/leave-wfh?user_id=${userId}`);
+        const res = await fetch(`http://localhost:3000/api/employee/leave-wfh?user_id=${userId}`);
         const data = await res.json();
 
         document.getElementById("remainingCL").textContent = data.remaining_cl;
@@ -961,8 +961,8 @@
           if (item.type === "Casual Leave" || item.type === "Sick Leave" || item.type === "Earned Leave") {
             // 👇 Include `type` column for leaves
             row = `<tr>
-      <td>${item.from_date}</td>
-      <td>${item.to_date}</td>
+      <td>${formatDob(item.from_date)}</td>
+      <td>${formatDob(item.to_date)}</td>
       <td>${item.duration}</td>
       <td>${item.reason}</td>
       <td>${item.type}</td>
@@ -972,8 +972,8 @@
           } else {
             // 👇 Exclude `type` column for WFH
             row = `<tr>
-      <td>${item.from_date}</td>
-      <td>${item.to_date}</td>
+      <td>${formatDob(item.from_date)}</td>
+      <td>${formatDob(item.to_date)}</td>
       <td>${item.reason}</td>
       <td class="status-${item.status}">${item.status}</td>
     </tr>`;
@@ -989,7 +989,7 @@
         teamCards.innerHTML = "<p>Loading team members...</p>";
 
         try {
-          const res = await fetch("http://13.233.156.70:3000/api/manager/employees", {
+          const res = await fetch("http://localhost:3000/api/manager/employees", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1014,8 +1014,8 @@
         <img src="${profileImg}" alt="Profile">
         <h4>${emp.fullname}</h4>
         <p>${emp.position || "N/A"}</p>
-        <p>DOB: ${emp.dob || "-"}</p>
-        <p>Joining: ${emp.joining_date || "-"}</p>
+        <p>DOB: ${formatDob(emp.dob) || "-"}</p>
+        <p>Joining: ${formatDob(emp.joining_date) || "-"}</p>
       `;
             card.addEventListener("click", () => {
               localStorage.setItem("ZeroEmployeeData", JSON.stringify(emp));
@@ -1034,7 +1034,7 @@
       // Fetch employee details using the username and store in localStorage
       async function fetchEmployeeDetails() {
         try {
-          const res = await fetch("http://13.233.156.70:3000/api/employee/details", {
+          const res = await fetch("http://localhost:3000/api/employee/details", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1057,7 +1057,7 @@
         profileContainer.innerHTML = "<p>Loading profile...</p>";
 
         try {
-          const res = await fetch("http://13.233.156.70:3000/api/employee/details", {
+          const res = await fetch("http://localhost:3000/api/employee/details", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: userData.user.username })
@@ -1108,7 +1108,7 @@
             <h5>Department</h5><p>${data.department || "-"}</p>
           </div>
           <div class="detail-item">
-            <h5>Joining Date</h5><p>${data.joining_date || "-"}</p>
+            <h5>Joining Date</h5><p>${formatDob(data.joining_date) || "-"}</p>
           </div>
           <div class="detail-item">
             <h5>Reporting Manager</h5><p>${data.reporting_manager || "-"}</p>
@@ -1123,7 +1123,7 @@
             <h5>Gender</h5><p>${data.gender || "-"}</p>
           </div>
           <div class="detail-item">
-            <h5>Date of Birth</h5><p>${data.dob || "-"}</p>
+            <h5>Date of Birth</h5><p>${formatDob(data.dob) || "-"}</p>
           </div>
           <div class="detail-item">
             <h5>Blood Group</h5><p>${data.blood_group || "-"}</p>
@@ -1147,7 +1147,7 @@
 
         if (!username) return;
 
-        const res = await fetch(`http://13.233.156.70:3000/api/employee/home-summary?username=${username}`);
+        const res = await fetch(`http://localhost:3000/api/employee/home-summary?username=${username}`);
         const data = await res.json();
 
         document.getElementById("homeName").textContent = data.fullname || "--";
@@ -1233,7 +1233,7 @@
         <span class="document-tag">${doc.tag}</span>
       `;
             card.onclick = () => {
-              const fileUrl = `http://13.233.156.70:3000/api/employee/documents/${username}/${doc.filename}`;
+              const fileUrl = `http://localhost:3000/api/employee/documents/${username}/${doc.filename}`;
               window.open(fileUrl, "_blank");
             };
             container.appendChild(card);
@@ -1241,8 +1241,32 @@
         });
       }
 
-
-
+// A function to format the date
+function formatDob(isoDateString) {
+  if (!isoDateString) {
+    return "-";
+  }
+  const date = new Date(isoDateString);
+  const options = {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  };
+  return new Intl.DateTimeFormat('en-GB', options).format(date);
+}
+// A function to format the date
+      function formatDob(isoDateString) {
+        if (!isoDateString) {
+          return "-";
+        }
+        const date = new Date(isoDateString);
+        const options = {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        };
+        return new Intl.DateTimeFormat("en-GB", options).format(date);
+      }
 
       function logout() {
         localStorage.removeItem("ZeroUserData");

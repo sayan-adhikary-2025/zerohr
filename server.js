@@ -35,7 +35,7 @@ const db = new Pool({
   password: process.env.DB_PASS || "yourpassword",
   database: process.env.DB_NAME || "leaveapp",
   port: process.env.DB_PORT || 5432,
-   ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false, // use SSL in prod if needed
+  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false, // use SSL in prod if needed
 });
 
 db.connect()
@@ -63,7 +63,7 @@ app.post("/api/login", async (req, res) => {
     const loginQuery = `
       SELECT id, username, fullname, org_id, user_type
       FROM users
-      WHERE username = $1 AND password = $2
+      WHERE TRIM(username) = $1 AND TRIM(password) = $2
     `;
 
     const result = await db.query(loginQuery, [username, password]);
@@ -207,13 +207,14 @@ app.get("/api/job-postings/:id", async (req, res) => {
     const result = await db.query("SELECT * FROM job_postings WHERE id = $1", [
       jobId,
     ]);
-    console.log("Query result:", result);
 
-    if (!result) {
+    // If no rows are returned, the job was not found
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: "Job not found" });
     }
 
-    res.json(result);
+    // Send only the first row of data
+    res.json(result.rows[0]);
   } catch (err) {
     console.error("Error fetching job:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -342,11 +343,22 @@ app.get("/api/applications/:id", async (req, res) => {
 app.put("/api/applications/:id/status", async (req, res) => {
   const id = req.params.id;
   const { status } = req.body;
+  let setStatus
+
+  if (status === "Applied") {
+    setStatus = 1;
+  } else if (status === "Interviewing") {
+    setStatus = 2;
+  } else if (status === "Accepted") {
+    setStatus = 3;
+  } else {
+    setStatus = 4;
+  }
 
   try {
     const result = await db.query(
       "UPDATE job_applications SET status = $1 WHERE id = $2",
-      [status, id]
+      [setStatus, id]
     );
 
     if (result.rowCount === 0) {
@@ -536,7 +548,7 @@ app.post("/api/employee/leave-action", async (req, res) => {
     // Step 3: If WFH, accept directly
     if (leave_wfh === "WFH") {
       await db.query(
-        `UPDATE leave_requests SET leave_requests.status = 'Accepted' WHERE id = $1`,
+        `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
         [leave_id]
       );
       return res.status(200).json({ message: "WFH accepted successfully" });
@@ -582,7 +594,7 @@ app.post("/api/employee/leave-action", async (req, res) => {
     await db.query("BEGIN");
 
     await db.query(
-      `UPDATE leave_requests SET leave_requests.status = 'Accepted' WHERE id = $1`,
+      `UPDATE leave_requests SET status = 'Accepted' WHERE id = $1`,
       [leave_id]
     );
 
@@ -765,6 +777,12 @@ app.get("/api/employee/home-summary", async (req, res) => {
     const today = new Date().toISOString().split("T")[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
+    // Get org_id for the user
+    const getOrgQuery = `SELECT org_id FROM users WHERE username = $1`;
+    const orgResult = await db.query(getOrgQuery, [username]);
+
+    const user_org_id = orgResult.rows[0].org_id;
+
     // Step 3: Parallel queries
     const [
       leavesTodayRes,
@@ -797,9 +815,10 @@ app.get("/api/employee/home-summary", async (req, res) => {
       db.query(
         `SELECT title, department
          FROM job_postings
-         WHERE status = 'Active'
+         WHERE status = 'Active' AND org_id = $1
          ORDER BY created_at DESC
-         LIMIT 5`
+         LIMIT 5`,
+         [user_org_id]
       ),
       db.query(
         `SELECT pending_casual_leaves, pending_sick_leaves, pending_earned_leaves
@@ -968,7 +987,15 @@ app.post("/api/add_employee", async (req, res) => {
       [org_id, fullname, user_type, username, password]
     );
 
-    const user_id = userInsert.lastID;
+    const userResult = await db.query(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    );
+
+    const user_id = userResult.rows[0].id;
+
+    console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", user_id)
+
 
     // 2. Insert into employee table
     const employeeInsert = await db.query(

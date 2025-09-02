@@ -279,7 +279,7 @@
             <div><strong>City From:</strong><span id="empCity"></span></div>
             <div>
               <strong>LinkedIn:</strong
-              ><a id="empLinkedIn" href="#" target="_blank">View</a>
+              ><a id="empLinkedIn" href="https://linkedin.com/in/sayan-product" target="_blank">View</a>
             </div>
           </div>
 
@@ -331,7 +331,8 @@
     </section>
 
     <script>
-      const employeeUserId = localStorage.getItem("ZeroEmployeeData");
+      const employeeUserId =
+        JSON.parse(localStorage.getItem("ZeroEmployeeData"))?.user_id ?? null;
       const username = localStorage.getItem("username");
 
       function switchTab(tabId) {
@@ -352,14 +353,14 @@
 
       async function loadEmployeeDetails() {
         const res = await fetch(
-          `http://13.233.156.70:3000/api/employee/profile/${employeeUserId}`
+          `http://localhost:3000/api/employee/profile/${employeeUserId}`
         );
         const data = await res.json();
         const div = document.getElementById("profileDetails");
         div.innerHTML = `
         <p><strong>Name:</strong> ${data.fullname}</p>
         <p><strong>Gender:</strong> ${data.gender}</p>
-        <p><strong>DOB:</strong> ${data.dob}</p>
+        <p><strong>DOB:</strong> ${formatDob(data.dob)}</p>
         <p><strong>Mobile:</strong> ${data.mobile}</p>
         <p><strong>Email:</strong> ${data.email}</p>
         <p><strong>Department:</strong> ${data.department}</p>
@@ -371,7 +372,7 @@
 
       async function loadLeaveRequests() {
         const res = await fetch(
-          `http://13.233.156.70:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+          `http://localhost:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
         );
         const data = await res.json();
 
@@ -384,8 +385,8 @@
           const row = document.createElement("tr");
 
           row.innerHTML = `
-      <td>${item.from_date}</td>
-      <td>${item.to_date}</td>
+      <td>${formatDob(item.from_date)}</td>
+      <td>${formatDob(item.to_date)}</td>
       <td>${item.type}</td>
       <td>${item.duration}</td>
       <td>${item.reason}</td>
@@ -410,7 +411,7 @@
 
       async function loadWFHRequests() {
         const res = await fetch(
-          `http://13.233.156.70:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+          `http://localhost:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
         );
         const data = await res.json();
 
@@ -423,8 +424,8 @@
           const row = document.createElement("tr");
 
           row.innerHTML = `
-      <td>${item.from_date}</td>
-      <td>${item.to_date}</td>
+      <td>${formatDob(item.from_date)}</td>
+      <td>${formatDob(item.to_date)}</td>
       <td>${item.reason}</td>
       <td><span class="status-chip status-${item.status}">${
             item.status
@@ -447,7 +448,7 @@
 
       async function updateLeave(id, action) {
         const res = await fetch(
-          `http://13.233.156.70:3000/api/employee/leave-action`,
+          `http://localhost:3000/api/employee/leave-action`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -465,7 +466,7 @@
 
       async function updateWFH(id, action) {
         const res = await fetch(
-          `http://13.233.156.70:3000/api/employee/leave-action`,
+          `http://localhost:3000/api/employee/leave-action`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -506,14 +507,29 @@
         empData.department || "-";
       document.getElementById("empEmail").textContent = empData.email || "-";
       document.getElementById("empMobile").textContent = empData.mobile || "-";
-      document.getElementById("empDob").textContent = empData.dob || "-";
+      document.getElementById("empDob").textContent =
+        formatDob(empData.dob) || "-";
       document.getElementById("empJoining").textContent =
-        empData.joining_date || "-";
+        formatDob(empData.joining_date) || "-";
       document.getElementById("empCity").textContent = empData.cityfrom || "-";
       document.getElementById("empAbout").textContent = empData.about || "-";
       document.getElementById("empHobbies").textContent =
         empData.hobbies || "-";
       document.getElementById("empuser_id").href = empData.user_id || "#";
+
+      // A function to format the date
+      function formatDob(isoDateString) {
+        if (!isoDateString) {
+          return "-";
+        }
+        const date = new Date(isoDateString);
+        const options = {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        };
+        return new Intl.DateTimeFormat("en-GB", options).format(date);
+      }
     </script>
   </body>
 </html>

@@ -42,7 +42,7 @@
         return;
       }
 
-      const res = await fetch(`http://13.233.156.70:3000/api/job-postings/${jobId}`);
+      const res = await fetch(`http://localhost:3000/api/job-postings/${jobId}`);
       if (!res.ok) {
         document.body.innerHTML = "<p class='text-center mt-10 text-red-600'>Job not found.</p>";
         return;

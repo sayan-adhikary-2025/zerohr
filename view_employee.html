@@ -10,7 +10,7 @@
 <body class="bg-gray-100 text-gray-800 font-sans">
   <header class="bg-slate-800 text-white flex items-center justify-between px-6 py-3 shadow">
     <h1 class="text-xl font-semibold">Employee Profile</h1>
-    <a href="onboarding.html" class="text-sm bg-gray-600 px-3 py-1 rounded hover:bg-blue-700">Back</a>
+    <a href="onboarding.html" class="text-sm bg-gray-600 px-3 py-1 rounded hover:bg-blue-600">Back</a>
   </header>
 
   <main class="p-6 max-w-5xl mx-auto">
@@ -175,7 +175,7 @@
       if (orgData?.user?.org_id) data.org_id = orgData.user.org_id;
 
       try {
-        const res = await fetch("http://13.233.156.70:3000/api/employees/update", {
+        const res = await fetch("http://localhost:3000/api/employees/update", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
