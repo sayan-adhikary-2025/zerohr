@@ -42,7 +42,7 @@
         return;
       }
 
-      const res = await fetch(`http://3.109.55.25:3000/api/job-postings/${jobId}`);
+      const res = await fetch(`http://43.204.111.217:3000/api/job-postings/${jobId}`);
       if (!res.ok) {
         document.body.innerHTML = "<p class='text-center mt-10 text-red-600'>Job not found.</p>";
         return;

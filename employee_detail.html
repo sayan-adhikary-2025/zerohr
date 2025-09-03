@@ -353,7 +353,7 @@
 
       async function loadEmployeeDetails() {
         const res = await fetch(
-          `http://3.109.55.25:3000/api/employee/profile/${employeeUserId}`
+          `http://43.204.111.217:3000/api/employee/profile/${employeeUserId}`
         );
         const data = await res.json();
         const div = document.getElementById("profileDetails");
@@ -372,7 +372,7 @@
 
       async function loadLeaveRequests() {
         const res = await fetch(
-          `http://3.109.55.25:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+          `http://43.204.111.217:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
         );
         const data = await res.json();
 
@@ -411,7 +411,7 @@
 
       async function loadWFHRequests() {
         const res = await fetch(
-          `http://3.109.55.25:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
+          `http://43.204.111.217:3000/api/employee/leave-wfh?user_id=${empData.user_id}`
         );
         const data = await res.json();
 
@@ -448,7 +448,7 @@
 
       async function updateLeave(id, action) {
         const res = await fetch(
-          `http://3.109.55.25:3000/api/employee/leave-action`,
+          `http://43.204.111.217:3000/api/employee/leave-action`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -466,7 +466,7 @@
 
       async function updateWFH(id, action) {
         const res = await fetch(
-          `http://3.109.55.25:3000/api/employee/leave-action`,
+          `http://43.204.111.217:3000/api/employee/leave-action`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
