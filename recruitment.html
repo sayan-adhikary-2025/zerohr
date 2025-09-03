@@ -424,7 +424,7 @@
     }
 
     function copyJobLink(jobId) {
-      const link = `file:///C:/Users/mi%20pc/Downloads/Leave/job-view.html?id=${jobId}`;
+      const link = `http://zerohr-frontend.s3-website.ap-south-1.amazonaws.com/job-view.html?id=${jobId}`;
       navigator.clipboard.writeText(link).then(() => {
         alert("🔗 Job link copied to clipboard!");
       }).catch(err => {
